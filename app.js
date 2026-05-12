@@ -141,6 +141,55 @@ async function loadAndRender() {
   applyFilters();
 }
 
+// ====== Repo Sync: load data/videos.json from repo ======
+const REPO_DATA_URL = 'data/videos.json';
+let repoDataLoaded = false;
+
+async function syncFromRepo() {
+  if (repoDataLoaded) return;
+  try {
+    const resp = await fetch(REPO_DATA_URL + '?v=' + Date.now());
+    if (!resp.ok) return;
+    const repoVideos = await resp.json();
+    if (!Array.isArray(repoVideos) || repoVideos.length === 0) return;
+
+    const existing = await getAllVideos();
+    const existingPaths = new Set(existing.map(v => v.videoPath).filter(Boolean));
+    const existingTitles = new Set(existing.map(v => (v.title || '') + '|' + (v.date || '')));
+
+    let added = 0;
+    for (const item of repoVideos) {
+      // Deduplicate: skip if same videoPath or same title+date already exists
+      const key = (item.videoPath || '') || ((item.title || '') + '|' + (item.date || ''));
+      const pathMatch = item.videoPath && existingPaths.has(item.videoPath);
+      const titleMatch = existingTitles.has((item.title || '') + '|' + (item.date || ''));
+
+      if (!pathMatch && !titleMatch) {
+        item.createdAt = item.createdAt || new Date().toISOString();
+        await addVideo(item);
+        if (item.videoPath) existingPaths.add(item.videoPath);
+        existingTitles.add((item.title || '') + '|' + (item.date || ''));
+        added++;
+      }
+    }
+    if (added > 0) {
+      console.log('Synced ' + added + ' new entries from repo');
+    }
+    repoDataLoaded = true;
+  } catch (e) {
+    console.warn('Repo sync skipped:', e.message);
+  }
+}
+
+async function exportForRepo() {
+  const videos = await getAllVideos();
+  const exportData = videos.map(v => {
+    const { videoData, id, ...rest } = v;
+    return rest;
+  });
+  return JSON.stringify(exportData, null, 2);
+}
+
 function applyFilters() {
   const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
 
@@ -544,6 +593,19 @@ async function exportData() {
   a.download = 'ultrasound-db-export-' + new Date().toISOString().split('T')[0] + '.json';
   a.click();
   URL.revokeObjectURL(url);
+
+  // Also offer to download as data/videos.json (repo-ready)
+  setTimeout(() => {
+    if (confirm(t('exportRepoPrompt') || 'Also download as data/videos.json for repo sync?')) {
+      const repoBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const repoUrl = URL.createObjectURL(repoBlob);
+      const a2 = document.createElement('a');
+      a2.href = repoUrl;
+      a2.download = 'videos.json';
+      a2.click();
+      URL.revokeObjectURL(repoUrl);
+    }
+  }, 500);
 }
 
 async function importData(event) {
@@ -591,5 +653,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await requestPersistence();
   await checkVideoServer();
   document.getElementById('form-date').value = new Date().toISOString().split('T')[0];
-  loadAndRender();
+  await loadAndRender();
+  // Load repo data in background (never deletes existing data)
+  syncFromRepo().then(() => loadAndRender());
 });
