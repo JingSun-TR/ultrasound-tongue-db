@@ -51,9 +51,10 @@ async function getAllVideos() {
 }
 
 async function getVideo(id) {
+  const numId = typeof id === 'string' ? parseInt(id) : id;
   return new Promise((resolve, reject) => {
     // Try by primary key first
-    const request1 = dbTx('videos').get(id);
+    const request1 = dbTx('videos').get(numId);
     request1.onsuccess = () => {
       if (request1.result) {
         resolve(request1.result);
@@ -64,9 +65,9 @@ async function getVideo(id) {
         request2.onsuccess = (e) => {
           const cursor = e.target.result;
           if (cursor) {
-            if (cursor.value.id === id) {
+            if (cursor.value.id === numId) {
               const result = cursor.value;
-              result._dbKey = cursor.primaryKey;  // store real key for updates/deletes
+              result._dbKey = cursor.primaryKey;
               resolve(result);
               return;
             }
@@ -567,9 +568,10 @@ if (dropZone) {
 
 // ====== Play Video ======
 async function playVideo(id) {
-  // Search allVideos by id field (not IndexedDB key)
-  const video = allVideos.find(v => v.id === id);
-  if (!video) return;
+  // Search allVideos by id field (parseInt because onclick passes string)
+  const numId = parseInt(id);
+  const video = allVideos.find(v => v.id === numId);
+  if (!video) { console.warn('Video not found by id:', id, 'type:', typeof id); return; }
 
   const modal = document.getElementById('player-modal');
   const player = document.getElementById('player-video');
