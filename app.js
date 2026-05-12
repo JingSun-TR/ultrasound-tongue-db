@@ -181,26 +181,36 @@ async function syncFromRepo() {
     if (!Array.isArray(repoVideos) || repoVideos.length === 0) return;
 
     const existing = await getAllVideos();
-    const existingPaths = new Set(existing.map(v => v.videoPath).filter(Boolean));
-    const existingTitles = new Set(existing.map(v => (v.title || '') + '|' + (v.date || '')));
+    const titleDateMap = new Map();
+    for (const v of existing) {
+      const key = (v.title || '') + '|' + (v.date || '');
+      titleDateMap.set(key, v);
+    }
 
-    let added = 0;
+    let added = 0, updated = 0;
     for (const item of repoVideos) {
-      // Deduplicate: skip if same videoPath or same title+date already exists
-      const key = (item.videoPath || '') || ((item.title || '') + '|' + (item.date || ''));
-      const pathMatch = item.videoPath && existingPaths.has(item.videoPath);
-      const titleMatch = existingTitles.has((item.title || '') + '|' + (item.date || ''));
+      const key = (item.title || '') + '|' + (item.date || '');
+      const existingEntry = titleDateMap.get(key);
 
-      if (!pathMatch && !titleMatch) {
+      if (existingEntry) {
+        // Update existing entry if repo has videoUrl and local doesn't
+        if (item.videoUrl && !existingEntry.videoUrl) {
+          await updateVideo(existingEntry._dbKey || existingEntry.id || existingEntry.id, {
+            videoUrl: item.videoUrl,
+            videoPath: item.videoPath,
+            fileSize: item.fileSize
+          });
+          updated++;
+        }
+      } else {
+        // Add new entry
         item.createdAt = item.createdAt || new Date().toISOString();
         await addVideo(item);
-        if (item.videoPath) existingPaths.add(item.videoPath);
-        existingTitles.add((item.title || '') + '|' + (item.date || ''));
         added++;
       }
     }
-    if (added > 0) {
-      console.log('Synced ' + added + ' new entries from repo');
+    if (added > 0 || updated > 0) {
+      console.log('Repo sync: ' + added + ' added, ' + updated + ' updated');
     }
     repoDataLoaded = true;
   } catch (e) {
