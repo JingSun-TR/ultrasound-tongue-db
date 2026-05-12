@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>超音波舌位動画データベース — Ultrasound Tongue DB</title>
+  <title>超音波舌位動画DB — Ultrasound Tongue DB</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -20,8 +20,9 @@
       <div class="lang-switcher">
         <button class="lang-btn active" data-lang="ja" onclick="switchLang('ja')">🇯🇵 日</button>
         <button class="lang-btn" data-lang="zh" onclick="switchLang('zh')">🇨🇳 中</button>
-        <button class="lang-btn" data-lang="en" onclick="switchLang('en')">🇬🇧 EN</button>
       </div>
+      <button class="btn btn-icon" onclick="exportAll()">📥 导出</button>
+      <button class="btn btn-icon" id="admin-btn" onclick="toggleAdmin()">🔒 管理</button>
       <button class="btn btn-icon" onclick="toggleView()" id="view-toggle">📋 表格</button>
     </div>
   </div>
@@ -29,8 +30,7 @@
 
 <div class="search-bar">
   <div class="search-inner">
-    <input type="text" id="search-input" class="search-input" placeholder="🔍 検索... 音素 / 発話者 / タイトル / IPA" oninput="applyFilters()">
-    <div class="filter-chips" id="active-filters"></div>
+    <input type="text" id="search-input" class="search-input" placeholder="🔍 検索... 音素 / 発話者 / タイトル" oninput="applyFilters()">
   </div>
 </div>
 
@@ -38,13 +38,8 @@
   <div id="table-view" class="table-container">
     <table>
       <thead><tr>
-        <th class="col-no">#</th>
-        <th class="col-title">タイトル</th>
-        <th class="col-phoneme">音素</th>
-        <th class="col-lang">言語</th>
-        <th class="col-speaker">発話者</th>
-        <th class="col-date">収録日</th>
-        <th class="col-play">再生</th>
+        <th>#</th><th>タイトル</th><th>音素</th><th>言語</th><th>発話者</th><th>日付</th><th>再生</th>
+        <th class="admin-only" style="display:none">操作</th>
       </tr></thead>
       <tbody id="table-body"></tbody>
     </table>
@@ -52,6 +47,51 @@
   <div id="card-view" class="card-grid" style="display:none"></div>
 </main>
 
+<!-- Admin Panel -->
+<div id="admin-panel" class="admin-panel" style="display:none">
+  <h3 id="form-heading">動画を追加</h3>
+  <input type="hidden" id="form-edit-id">
+  <div class="form-row">
+    <label>タイトル *</label>
+    <input type="text" id="form-title" class="text-input" placeholder="例：/a/ 日本語母音">
+  </div>
+  <div class="form-row">
+    <label>音素 *</label>
+    <input type="text" id="form-phoneme" class="text-input" placeholder="例：a, i, u, e, o">
+  </div>
+  <div class="form-row">
+    <label>言語</label>
+    <select id="form-language" class="text-input"><option value="ja">日本語</option><option value="zh">中国語</option><option value="en">英語</option><option value="ko">韓国語</option></select>
+  </div>
+  <div class="form-row">
+    <label>発話者</label>
+    <input type="text" id="form-speaker" class="text-input" value="CF1">
+  </div>
+  <div class="form-row">
+    <label>日付</label>
+    <input type="date" id="form-date" class="text-input">
+  </div>
+  <div class="form-row">
+    <label>動画ファイル</label>
+    <input type="file" id="form-file" accept="video/*" class="text-input">
+    <span id="file-name" style="font-size:12px;color:#888"></span>
+  </div>
+  <div class="form-row">
+    <label>または動画URL</label>
+    <input type="text" id="form-url" class="text-input" placeholder="videos/xxx.mp4">
+  </div>
+  <div class="form-row">
+    <label>備考</label>
+    <textarea id="form-notes" class="text-input" rows="2"></textarea>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" onclick="saveEntry()">保存</button>
+    <button class="btn" onclick="cancelEdit()">キャンセル</button>
+    <button class="btn" style="margin-left:auto;background:#900;color:#fff" onclick="exportForRepo()">📤 Repo用JSON</button>
+  </div>
+</div>
+
+<!-- Player Modal -->
 <div class="modal" id="player-modal" style="display:none">
   <div class="modal-backdrop" onclick="closePlayer()"></div>
   <div class="modal-content">
@@ -62,41 +102,113 @@
 </div>
 
 <script>
-// ====== State ======
-let allVideos = [];
+// ====== Config ======
+const ADMIN_PW = 'sunlab2024';
+let isAdmin = false;
 let currentView = 'table';
+let allVideos = [];
+let repoData = [];
+let localEdits = {};
+let nextLocalId = -1;
 
-// ====== Load Data ======
+// ====== Load ======
 async function loadData() {
+  // 1. Load repo baseline
   try {
-    const resp = await fetch('data/videos.json');
-    allVideos = await resp.json();
-    document.getElementById('header-count').textContent = allVideos.length + '件';
-    applyFilters();
-  } catch(e) {
-    document.getElementById('table-body').innerHTML =
-      '<tr><td colspan="7" style="text-align:center;padding:40px;color:#f66">データ読み込み失敗: ' + e.message + '</td></tr>';
+    const r = await fetch('data/videos.json');
+    repoData = await r.json();
+  } catch(e) { repoData = []; }
+
+  // 2. Load local edits from IndexedDB
+  await loadLocalEdits();
+
+  // 3. Merge
+  mergeData();
+  applyFilters();
+}
+
+// ====== IndexedDB for local edits ======
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('ultrasound-tongue-db-local', 1);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore('edits', { keyPath: 'id' });
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function loadLocalEdits() {
+  try {
+    const db = await openIDB();
+    const tx = db.transaction('edits', 'readonly');
+    const store = tx.objectStore('edits');
+    localEdits = {};
+    await new Promise(r => {
+      const req = store.openCursor();
+      req.onsuccess = e => {
+        const c = e.target.result;
+        if (c) { localEdits[c.key] = c.value; c.continue(); }
+        else r();
+      };
+    });
+    // Find next negative ID
+    nextLocalId = -1;
+    for (const k of Object.keys(localEdits)) {
+      if (parseInt(k) < nextLocalId) nextLocalId = parseInt(k);
+    }
+    nextLocalId--;
+    db.close();
+  } catch(e) { localEdits = {}; }
+}
+
+async function saveLocalEdit(entry) {
+  const db = await openIDB();
+  const tx = db.transaction('edits', 'readwrite');
+  tx.objectStore('edits').put(entry);
+  await new Promise(r => { tx.oncomplete = r; });
+  localEdits[entry.id] = entry;
+  db.close();
+}
+
+async function deleteLocalEdit(id) {
+  const db = await openIDB();
+  const tx = db.transaction('edits', 'readwrite');
+  tx.objectStore('edits').delete(id);
+  await new Promise(r => { tx.oncomplete = r; });
+  delete localEdits[id];
+  db.close();
+}
+
+// ====== Merge ======
+function mergeData() {
+  const map = new Map();
+  // Repo data first
+  for (const v of repoData) map.set(v.id, {...v, _source: 'repo'});
+  // Local edits override (including deleted flag)
+  for (const [id, v] of Object.entries(localEdits)) {
+    if (v._deleted) { map.delete(parseInt(id)); continue; }
+    map.set(parseInt(id), {...v, _source: 'local'});
   }
+  allVideos = Array.from(map.values()).sort((a,b) => {
+    if (a.language !== b.language) return a.language === 'ja' ? -1 : 1;
+    return (a.title||'').localeCompare(b.title||'');
+  });
+  document.getElementById('header-count').textContent = allVideos.length + '件';
 }
 
 // ====== Render ======
 function applyFilters() {
-  const q = (document.getElementById('search-input').value || '').toLowerCase().trim();
+  const q = (document.getElementById('search-input').value||'').toLowerCase().trim();
   let filtered = allVideos;
   if (q) {
     const terms = q.split(/\s+/).filter(Boolean);
     filtered = allVideos.filter(v => {
-      const s = [v.title, v.phoneme, v.ipa, v.speaker, v.language, v.date]
-        .filter(Boolean).join(' ').toLowerCase();
+      const s = [v.title,v.phoneme,v.ipa,v.speaker,v.language,v.date].filter(Boolean).join(' ').toLowerCase();
       return terms.every(t => s.includes(t));
     });
   }
-  // Sort by language then title
-  filtered.sort((a,b) => {
-    if (a.language !== b.language) return a.language === 'ja' ? -1 : 1;
-    return (a.title||'').localeCompare(b.title||'');
-  });
-
   if (currentView === 'table') renderTable(filtered);
   else renderCards(filtered);
 }
@@ -104,25 +216,25 @@ function applyFilters() {
 function renderTable(videos) {
   const tbody = document.getElementById('table-body');
   if (!videos.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#888">データなし</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-row">データなし</td></tr>';
     return;
   }
-  tbody.innerHTML = videos.map((v, i) => {
-    const langLabel = {ja:'日本語',zh:'中国語',en:'英語',ko:'韓国語'}[v.language] || v.language;
-    const hasVideo = !!v.videoUrl;
+  tbody.innerHTML = videos.map((v,i) => {
+    const lang = {ja:'日本語',zh:'中国語',en:'英語',ko:'韓国語'}[v.language]||v.language;
+    const hasVid = !!v.videoUrl || !!v.videoPath;
+    const actions = isAdmin ? '<td><button class="edit-btn" onclick="editEntry('+v.id+')">✏️</button><button class="del-btn" onclick="deleteEntry('+v.id+')">🗑</button></td>' : '';
     return '<tr>' +
-      '<td>' + (i+1) + '</td>' +
-      '<td>' + esc(v.title||'') + '</td>' +
-      '<td>' + esc(v.phoneme||'') + '</td>' +
-      '<td>' + langLabel + '</td>' +
-      '<td>' + esc(v.speaker||'') + '</td>' +
-      '<td>' + (v.date||'') + '</td>' +
-      '<td>' + (hasVideo
-        ? '<button class="play-btn" onclick="event.stopPropagation();playVideo(' + v.id + ')">▶</button>'
-        : '<span style="color:#888;font-size:12px">-</span>') +
-      '</td>' +
+      '<td>'+(i+1)+'</td>' +
+      '<td>'+esc(v.title||'')+(v._source==='local'?' <span style="color:#ff0;font-size:10px">[local]</span>':'')+'</td>' +
+      '<td>'+esc(v.phoneme||'')+'</td>' +
+      '<td>'+lang+'</td>' +
+      '<td>'+esc(v.speaker||'')+'</td>' +
+      '<td>'+(v.date||'')+'</td>' +
+      '<td>'+(hasVid?'<button class="play-btn" onclick="event.stopPropagation();playVideo('+v.id+')">▶</button>':'<span style="color:#888">-</span>')+'</td>' +
+      actions+
     '</tr>';
   }).join('');
+  document.querySelectorAll('.admin-only').forEach(e => e.style.display = isAdmin ? '' : 'none');
 }
 
 function renderCards(videos) {
@@ -132,22 +244,19 @@ function renderCards(videos) {
     return;
   }
   grid.innerHTML = videos.map(v => {
-    const langLabel = {ja:'日本語',zh:'中国語',en:'英語',ko:'韓国語'}[v.language] || v.language;
-    const hasVideo = !!v.videoUrl;
-    return '<div class="video-card"' + (hasVideo ? ' onclick="playVideo(' + v.id + ')"' : '') + '>' +
-      '<div class="video-thumb">' +
-        (hasVideo
-          ? '<video src="' + esc(v.videoUrl) + '#t=0.1" preload="metadata" muted style="width:100%;height:100%;object-fit:cover"></video>' +
-            '<span class="play-icon-overlay">▶</span>'
-          : '<span style="display:flex;align-items:center;justify-content:center;height:100%;color:#888">📹</span>') +
-      '</div>' +
-      '<div class="card-info">' +
-        '<div class="card-title">' + esc(v.title||'無題') + '</div>' +
-        '<div class="card-tags"><span class="phoneme-tag">' + esc(v.phoneme||'') + '</span></div>' +
-        '<div style="font-size:0.75rem;color:#888;margin-top:4px">' +
-          langLabel + ' · ' + esc(v.speaker||'') + ' · ' + (v.date||'') +
-        '</div>' +
-      '</div>' +
+    const lang = {ja:'日本語',zh:'中国語',en:'英語',ko:'韓国語'}[v.language]||v.language;
+    const hasVid = !!v.videoUrl || !!v.videoPath;
+    return '<div class="video-card"'+(hasVid?' onclick="playVideo('+v.id+')"':'')+'>' +
+      '<div class="video-thumb">'+
+        (hasVid
+          ? '<video src="'+esc(v.videoUrl||'videos/'+v.videoPath)+'#t=0.1" preload="metadata" muted></video><span class="play-icon-overlay">▶</span>'
+          : '<span style="display:flex;align-items:center;justify-content:center;height:100%;color:#888">📹</span>')+
+      '</div>'+
+      '<div class="card-info">'+
+        '<div class="card-title">'+esc(v.title||'無題')+'</div>'+
+        '<div class="card-tags"><span class="phoneme-tag">'+esc(v.phoneme||'')+'</span></div>'+
+        '<div style="font-size:0.75rem;color:#888;margin-top:4px">'+lang+' · '+esc(v.speaker||'')+' · '+(v.date||'')+'</div>'+
+      '</div>'+
     '</div>';
   }).join('');
 }
@@ -156,46 +265,152 @@ function renderCards(videos) {
 function playVideo(id) {
   const numId = parseInt(id);
   const video = allVideos.find(v => v.id === numId);
-  if (!video || !video.videoUrl) return;
+  if (!video) return;
+
+  const src = video.videoUrl || ('videos/' + video.videoPath);
+  if (!src || src === 'videos/undefined') return;
 
   const player = document.getElementById('player-video');
-  player.src = video.videoUrl;
+  player.src = src;
   player.style.display = '';
-
   document.getElementById('player-info').innerHTML =
-    '<h3>' + esc(video.title||'') + '</h3>' +
-    '<div class="player-meta">' +
-      '<span class="phoneme-tag">🔤 ' + esc(video.phoneme) + '</span>' +
-      '<span class="phoneme-tag">🌐 ' + ({ja:'日本語',zh:'中国語'}[video.language]||video.language) + '</span>' +
-      '<span class="phoneme-tag">👤 ' + esc(video.speaker||'') + '</span>' +
-      '<span class="phoneme-tag">📅 ' + (video.date||'') + '</span>' +
+    '<h3>'+esc(video.title||'')+'</h3>'+
+    '<div class="player-meta">'+
+      '<span class="phoneme-tag">🔤 '+esc(video.phoneme)+'</span>'+
+      '<span class="phoneme-tag">🌐 '+({ja:'日本語',zh:'中国語'}[video.language]||video.language)+'</span>'+
+      '<span class="phoneme-tag">👤 '+esc(video.speaker||'')+'</span>'+
+      '<span class="phoneme-tag">📅 '+(video.date||'')+'</span>'+
     '</div>';
-
   document.getElementById('player-modal').style.display = 'flex';
-  player.play().catch(() => {});
+  player.play().catch(()=>{});
 }
-
 function closePlayer() {
   document.getElementById('player-modal').style.display = 'none';
   const p = document.getElementById('player-video');
   p.pause(); p.src = '';
 }
 
-// ====== View Toggle ======
-function toggleView() {
-  currentView = currentView === 'table' ? 'cards' : 'table';
-  document.getElementById('table-view').style.display = currentView === 'table' ? '' : 'none';
-  document.getElementById('card-view').style.display = currentView === 'cards' ? '' : 'none';
-  document.getElementById('view-toggle').textContent = currentView === 'table' ? '📋 表格' : '🃏 卡片';
+// ====== Admin ======
+function toggleAdmin() {
+  if (isAdmin) { isAdmin = false; document.getElementById('admin-btn').textContent = '🔒 管理'; document.getElementById('admin-panel').style.display = 'none'; }
+  else { showPasswordPrompt(); }
   applyFilters();
 }
+function showPasswordPrompt() {
+  const pw = prompt('パスワードを入力してください');
+  if (pw === ADMIN_PW) { isAdmin = true; document.getElementById('admin-btn').textContent = '🔓 管理中'; document.getElementById('admin-panel').style.display = ''; cancelEdit(); }
+  else if (pw) alert('パスワードが違います');
+}
+async function saveEntry() {
+  const title = document.getElementById('form-title').value.trim();
+  const phoneme = document.getElementById('form-phoneme').value.trim();
+  if (!title || !phoneme) { alert('タイトルと音素は必須です'); return; }
 
-// ====== Language ======
-let currentLang = 'ja';
-function switchLang(lang) {
-  currentLang = lang;
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  const editId = document.getElementById('form-edit-id').value;
+  const entry = {
+    id: editId ? parseInt(editId) : nextLocalId--,
+    title, phoneme,
+    ipa: '',
+    language: document.getElementById('form-language').value,
+    speaker: document.getElementById('form-speaker').value.trim(),
+    date: document.getElementById('form-date').value,
+    notes: document.getElementById('form-notes').value.trim(),
+    createdAt: new Date().toISOString()
+  };
+
+  const url = document.getElementById('form-url').value.trim();
+  if (url) { entry.videoUrl = url; entry.videoPath = url.replace(/^videos\//, ''); }
+
+  // Handle file upload → store as blob in entry
+  const file = document.getElementById('form-file').files[0];
+  if (file) {
+    entry.videoData = file;
+    entry.fileSize = (file.size/1024).toFixed(1) + ' KB';
+    if (!entry.videoUrl) {
+      const fn = (title||'video').replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]/g,'_').substring(0,30);
+      const ext = file.name.split('.').pop();
+      entry.videoPath = fn + '.' + ext;
+    }
+  }
+
+  await saveLocalEdit(entry);
+  mergeData();
   applyFilters();
+  cancelEdit();
+}
+function editEntry(id) {
+  const v = allVideos.find(x => x.id === id);
+  if (!v) return;
+  document.getElementById('form-edit-id').value = v.id;
+  document.getElementById('form-title').value = v.title||'';
+  document.getElementById('form-phoneme').value = v.phoneme||'';
+  document.getElementById('form-language').value = v.language||'ja';
+  document.getElementById('form-speaker').value = v.speaker||'';
+  document.getElementById('form-date').value = v.date||'';
+  document.getElementById('form-notes').value = v.notes||'';
+  document.getElementById('form-url').value = v.videoUrl||'';
+  document.getElementById('form-heading').textContent = '動画を編集';
+  document.getElementById('form-file').value = '';
+  document.getElementById('admin-panel').scrollIntoView({behavior:'smooth'});
+}
+async function deleteEntry(id) {
+  if (!confirm('削除してもよろしいですか？')) return;
+  const v = allVideos.find(x => x.id === id);
+  if (v && v._source === 'local') {
+    await deleteLocalEdit(id);
+  } else {
+    // Mark repo entry as deleted locally
+    await saveLocalEdit({id, _deleted: true});
+  }
+  mergeData();
+  applyFilters();
+}
+function cancelEdit() {
+  document.getElementById('form-edit-id').value = '';
+  document.getElementById('form-title').value = '';
+  document.getElementById('form-phoneme').value = '';
+  document.getElementById('form-url').value = '';
+  document.getElementById('form-notes').value = '';
+  document.getElementById('form-file').value = '';
+  document.getElementById('form-heading').textContent = '動画を追加';
+}
+
+// ====== Export ======
+async function exportAll() {
+  const exp = allVideos.map(v => {
+    const {videoData, _source, ...rest} = v;
+    return rest;
+  });
+  const blob = new Blob([JSON.stringify(exp,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ultrasound-db-export-'+new Date().toISOString().split('T')[0]+'.json';
+  a.click();
+}
+async function exportForRepo() {
+  const exp = allVideos.map(v => {
+    const {videoData, _source, _deleted, ...rest} = v;
+    return rest;
+  });
+  const json = JSON.stringify(exp, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'videos.json';
+  a.click();
+  alert('videos.json をダウンロードしました。このファイルを data/ フォルダに上書きして git push すると、全ブラウザで共有されます。');
+}
+
+// ====== View ======
+function toggleView() {
+  currentView = currentView === 'table' ? 'cards' : 'table';
+  document.getElementById('table-view').style.display = currentView==='table'?'':'none';
+  document.getElementById('card-view').style.display = currentView==='cards'?'':'none';
+  document.getElementById('view-toggle').textContent = currentView==='table'?'📋 表格':'🃏 卡片';
+  applyFilters();
+}
+function switchLang(lang) {
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
 }
 
 function esc(s) {
@@ -204,8 +419,8 @@ function esc(s) {
 }
 
 // ====== Init ======
+document.getElementById('form-date').value = new Date().toISOString().split('T')[0];
 loadData();
 </script>
-
 </body>
 </html>
