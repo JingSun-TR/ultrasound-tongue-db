@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>IndexedDB Export</title></head><body>
+<h2>Extracting ultrasound-tongue-db data...</h2>
+<pre id="status">Opening IndexedDB...</pre>
+<script>
+(async () => {
+  const status = document.getElementById('status');
+  try {
+    const DB_NAME = 'ultrasound-tongue-db-v3';
+    const req = indexedDB.open(DB_NAME, 2);
+    
+    req.onsuccess = async (e) => {
+      const db = e.target.result;
+      const tx = db.transaction('videos', 'readonly');
+      const store = tx.objectStore('videos');
+      const getAll = store.getAll();
+      
+      getAll.onsuccess = () => {
+        const videos = getAll.result;
+        // Strip videoData blobs
+        const exportData = videos.map(v => {
+          const { videoData, ...rest } = v;
+          return rest;
+        });
+        
+        const json = JSON.stringify(exportData, null, 2);
+        status.textContent = `Found ${videos.length} entries. Downloading...`;
+        
+        // Trigger download
+        const blob = new Blob([json], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'videos.json';
+        document.body.appendChild(a);
+        a.click();
+        
+        status.textContent = `SUCCESS! ${videos.length} entries exported.` +
+          `\n\nData preview:\n` + json.substring(0, 2000) + '...';
+      };
+      
+      getAll.onerror = () => {
+        status.textContent = 'ERROR: ' + getAll.error;
+      };
+    };
+    
+    req.onerror = () => {
+      status.textContent = 'ERROR opening DB: ' + req.error +
+        '\n\nMake sure you open this page from the GitHub Pages origin ' +
+        '(jingsun-tr.github.io/ultrasound-tongue-db)';
+    };
+  } catch(e) {
+    status.textContent = 'FATAL: ' + e.message;
+  }
+})();
+</script>
+</body></html>
