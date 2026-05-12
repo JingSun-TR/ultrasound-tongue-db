@@ -1,25 +1,58 @@
-# 🔬 超音波舌位動画データベース — Ultrasound Tongue Imaging DB
+# Ultrasound Tongue DB 🔬
 
-超音波舌位画像の保存・検索・閲覧システム。音素、発話者、言語別に整理可能。
+超音波舌位動画データベース — A browser-based ultrasound tongue imaging video database.
 
-## 機能
+**Live:** [jingsun-tr.github.io/ultrasound-tongue-db](https://jingsun-tr.github.io/ultrasound-tongue-db)
 
-### 閲覧（全ユーザー）
-- 📋 **テーブル表示** — 全動画を一覧表示、ソート可能
-- 🃏 **カード表示** — サムネイルグリッド表示
-- 🔍 **全文検索** — 音素・発話者・タイトル・IPA・備考を横断検索
-- ▶️ **動画再生** — クリックでモーダル再生
+## Features
 
-### 管理（パスワード認証）
-- ➕ **動画追加** — ファイルアップロード or URL
-- ✏️ **編集** — 既存データの修正
-- 🗑 **削除** — 不要データの整理
-- 📥 **JSONエクスポート** — 全データのバックアップ
-- 📤 **JSONインポート** — データ復元
+- **Search & browse** ultrasound tongue videos by phoneme, speaker, language, IPA
+- **Table + Card** dual view modes
+- **Three languages** — 日本語 / 中文 / English (language switcher in header)
+- **Admin panel** with password protection (add, edit, delete videos)
+- **Import/Export** metadata via JSON
+- **Local video server** for unlimited storage (no browser quota limits)
 
-## デモ
-[https://jingsun-tr.github.io/ultrasound-tongue-db/](https://jingsun-tr.github.io/ultrasound-tongue-db/)
+## Getting Started
 
-## データ保存
-全データはブラウザの IndexedDB に保存されます（同一ドメインで永続）。
-サイト更新時もデータは保持されます。JSONエクスポートで定期バックアップ推奨。
+### 1. Open the web app
+Visit the GitHub Pages URL or open `index.html` locally.
+
+### 2. (Optional) Run the local video server for unlimited storage
+```bash
+python3 video-server.py
+# Or customize port/directory:
+python3 video-server.py --port 8765 --dir ~/ultrasound-videos/
+```
+
+This starts a local HTTP server on port 8765. The web app auto-detects it and switches to **unlimited storage mode** — videos are stored on disk, limited only by your hard drive space. No file size or format restrictions.
+
+Without the server, videos are stored in browser IndexedDB (subject to browser quota).
+
+### 3. Admin mode
+Click 🔒 管理 and enter password: `sunlab2024`
+
+## Project Structure
+```
+ultrasound-tongue-db/
+├── index.html          # Main page (i18n-ready)
+├── app.js              # App logic (IndexedDB + video server)
+├── i18n.js             # Chinese/Japanese/English translations
+├── style.css           # Design system
+├── video-server.py     # Local video file server (unlimited storage)
+└── .github/workflows/  # GitHub Pages deploy
+```
+
+## Architecture (v3)
+
+### Storage
+- **Metadata** → IndexedDB (persists across page/code updates)
+- **Videos** → Local file server OR IndexedDB blob (auto-detected)
+
+### Data Persistence
+- IndexedDB data survives all HTML/JS/CSS updates
+- Video files on disk survive all code deployments
+- Export/Import JSON for backup and migration
+
+## Language Support
+Click the language buttons in the header to switch between 日本語 / 中文 / English. Language preference is saved in localStorage.

@@ -1,15 +1,23 @@
-// === Ultrasound Tongue DB v2 — App Logic ===
+// === Ultrasound Tongue DB v3 — App Logic ===
+// Fixes:
+//   1. Title sync: renamed form-title (h3→form-heading, input→form-title-input)
+//   2. Multi-language: i18n via t() from i18n.js
+//   3. Unlimited storage: local video server mode (+ IndexedDB fallback)
+//   4. Data persistence: IndexedDB metadata survives all code updates
 
 // ====== CONFIG ======
-const ADMIN_PASSWORD = 'sunlab2024'; // Change this to your own password
+const ADMIN_PASSWORD = 'sunlab2024';
+const VIDEO_SERVER_URL = 'http://localhost:8765';
+const VIDEO_SERVER_DIR = '/videos/';
 let isAdmin = false;
-let currentView = 'table'; // 'table' or 'card'
+let currentView = 'table';
 let currentSort = { field: 'date', asc: false };
 let allVideos = [];
+let serverAvailable = false;   // true = local video server mode (unlimited)
 
-// ====== IndexedDB ======
-const DB_NAME = 'ultrasound-tongue-db-v2';
-const DB_VERSION = 1;
+// ====== IndexedDB (metadata only in server mode) ======
+const DB_NAME = 'ultrasound-tongue-db-v3';
+const DB_VERSION = 2;
 let db;
 
 function openDB() {
@@ -30,8 +38,8 @@ function openDB() {
   });
 }
 
-function dbTx(storeName, mode = 'readonly') {
-  return db.transaction(storeName, mode).objectStore(storeName);
+function dbTx(storeName, mode) {
+  return db.transaction(storeName, mode || 'readonly').objectStore(storeName);
 }
 
 async function getAllVideos() {
@@ -70,6 +78,17 @@ async function updateVideo(id, updates) {
 }
 
 async function deleteVideo(id) {
+  const video = await getVideo(id);
+  // If in server mode, try to delete the file from server
+  if (serverAvailable && video && video.videoPath) {
+    try {
+      await fetch(VIDEO_SERVER_URL + '/api/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: video.videoPath })
+      });
+    } catch (e) { /* best effort */ }
+  }
   return new Promise((resolve, reject) => {
     const request = dbTx('videos', 'readwrite').delete(id);
     request.onsuccess = () => resolve();
@@ -77,27 +96,64 @@ async function deleteVideo(id) {
   });
 }
 
+// ====== Video Server Check ======
+async function checkVideoServer() {
+  try {
+    const resp = await fetch(VIDEO_SERVER_URL + '/api/status');
+    if (resp.ok) {
+      const data = await resp.json();
+      serverAvailable = true;
+      document.getElementById('storage-info').textContent =
+        t('storageLabel') + (data.disk_free || t('storageUnlimited'));
+      console.log('Video server detected — unlimited storage mode');
+      return true;
+    }
+  } catch (e) { /* server not running, fall back to IndexedDB */ }
+  serverAvailable = false;
+  // Show IndexedDB quota
+  if (navigator.storage && navigator.storage.estimate) {
+    const est = await navigator.storage.estimate();
+    const used = (est.usage / (1024*1024)).toFixed(1);
+    const quota = (est.quota / (1024*1024)).toFixed(0);
+    document.getElementById('storage-info').textContent =
+      'IndexedDB: ' + used + 'MB / ' + quota + 'MB';
+  } else {
+    document.getElementById('storage-info').textContent = 'IndexedDB storage';
+  }
+  return false;
+}
+
+// Request persistent storage for IndexedDB mode
+async function requestPersistence() {
+  if (navigator.storage && navigator.storage.persist) {
+    const persisted = await navigator.storage.persisted();
+    if (!persisted) {
+      await navigator.storage.persist();
+    }
+  }
+}
+
 // ====== Render ======
 async function loadAndRender() {
   allVideos = await getAllVideos();
-  document.getElementById('header-count').textContent = `${allVideos.length}件`;
+  document.getElementById('header-count').textContent = allVideos.length +
+    (currentLang === 'ja' ? '件' : currentLang === 'zh' ? '条' : ' videos');
   applyFilters();
 }
 
 function applyFilters() {
   const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
-  
+
   let filtered = allVideos;
   if (query) {
     filtered = allVideos.filter(v => {
       const searchStr = [v.title, v.phoneme, v.ipa, v.speaker, v.language, v.notes, v.date]
         .filter(Boolean).join(' ').toLowerCase();
-      // Split query by spaces for multi-term search
       const terms = query.split(/\s+/).filter(Boolean);
       return terms.every(term => searchStr.includes(term));
     });
   }
-  
+
   // Sort
   const field = currentSort.field;
   filtered.sort((a, b) => {
@@ -107,79 +163,86 @@ function applyFilters() {
     if (va > vb) return currentSort.asc ? 1 : -1;
     return 0;
   });
-  
+
   renderTableView(filtered);
   renderCardView(filtered);
 }
 
+function langName(code) {
+  const map = { ja: 'lang_ja', zh: 'lang_zh', en: 'lang_en', ko: 'lang_ko', other: 'lang_other' };
+  return t(map[code] || 'lang_other');
+}
+
 function renderTableView(videos) {
   const tbody = document.getElementById('table-body');
-  
+
   if (videos.length === 0) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="10">データがありません。「管理」から動画を追加してください。</td></tr>`;
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="11">' + t('noData') + '</td></tr>';
     return;
   }
-  
-  const langNames = { ja: '日本語', zh: '中国語', en: '英語', ko: '韓国語', other: 'その他' };
-  
+
   tbody.innerHTML = videos.map((v, i) => {
     const phonemes = (v.phoneme || '').split(/[,，\s]+/).filter(Boolean)
-      .map(p => `<span class="phoneme-tag">${p}</span>`).join('');
-    
-    const actionCol = isAdmin ? `
-      <td class="col-actions">
-        <button class="edit-btn" onclick="event.stopPropagation();editEntry(${v.id})" title="編集">✏️</button>
-        <button class="del-btn" onclick="event.stopPropagation();deleteEntry(${v.id})" title="削除">🗑</button>
-      </td>` : '';
-    
-    return `<tr>
-      <td class="col-no">${i + 1}</td>
-      <td class="col-title">${escHtml(v.title || '')}</td>
-      <td class="col-phoneme">${phonemes}</td>
-      <td class="col-ipa">${escHtml(v.ipa || '')}</td>
-      <td class="col-lang">${langNames[v.language] || v.language || ''}</td>
-      <td class="col-speaker">${escHtml(v.speaker || '')}</td>
-      <td class="col-date">${v.date || ''}</td>
-      <td class="col-duration">${v.duration || '-'}</td>
-      <td class="col-play"><button class="play-btn" onclick="event.stopPropagation();playVideo(${v.id})">▶</button></td>
-      ${actionCol}
-    </tr>`;
+      .map(p => '<span class="phoneme-tag">' + escHtml(p) + '</span>').join('');
+
+    const actionCol = isAdmin ?
+      '<td class="col-actions">' +
+        '<button class="edit-btn" onclick="event.stopPropagation();editEntry(' + v.id + ')" title="✏️">✏️</button>' +
+        '<button class="del-btn" onclick="event.stopPropagation();deleteEntry(' + v.id + ')" title="🗑">🗑</button>' +
+      '</td>' : '';
+
+    return '<tr>' +
+      '<td class="col-no">' + (i + 1) + '</td>' +
+      '<td class="col-title">' + escHtml(v.title || '') + '</td>' +
+      '<td class="col-phoneme">' + phonemes + '</td>' +
+      '<td class="col-ipa">' + escHtml(v.ipa || '') + '</td>' +
+      '<td class="col-lang">' + langName(v.language) + '</td>' +
+      '<td class="col-speaker">' + escHtml(v.speaker || '') + '</td>' +
+      '<td class="col-date">' + (v.date || '') + '</td>' +
+      '<td class="col-duration">' + (v.duration || '-') + '</td>' +
+      '<td class="col-play"><button class="play-btn" onclick="event.stopPropagation();playVideo(' + v.id + ')">▶</button></td>' +
+      '<td class="col-size">' + (v.fileSize || '-') + '</td>' +
+      actionCol +
+    '</tr>';
   }).join('');
-  
+
   // Show/hide admin columns
   document.querySelectorAll('.admin-only').forEach(el => {
     el.style.display = isAdmin ? '' : 'none';
   });
-  
-  // Update colspan on empty
-  const emptyRow = tbody.querySelector('.empty-row td');
-  if (emptyRow) emptyRow.colSpan = isAdmin ? 10 : 9;
 }
 
 function renderCardView(videos) {
   const grid = document.getElementById('card-view');
-  
+
   if (videos.length === 0) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted);">データがありません。</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted);">' +
+      t('noData') + '</div>';
     return;
   }
-  
+
   grid.innerHTML = videos.map(v => {
     const phonemes = (v.phoneme || '').split(/[,，\s]+/).filter(Boolean)
-      .map(p => `<span class="phoneme-tag">${p}</span>`).join('');
-    
-    return `<div class="video-card" onclick="playVideo(${v.id})">
-      <div class="video-thumb">
-        <span class="play-icon-overlay">▶</span>
-      </div>
-      <div class="card-info">
-        <div class="card-title">${escHtml(v.title || '無題')}</div>
-        <div class="card-tags">${phonemes}</div>
-        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">
-          ${v.speaker ? escHtml(v.speaker) + ' · ' : ''}${v.date || ''}
-        </div>
-      </div>
-    </div>`;
+      .map(p => '<span class="phoneme-tag">' + escHtml(p) + '</span>').join('');
+
+    // Show thumbnail in server mode
+    let thumbContent = '<span class="play-icon-overlay">▶</span>';
+    if (serverAvailable && v.videoPath) {
+      thumbContent = '<video src="' + VIDEO_SERVER_URL + VIDEO_SERVER_DIR + encodeURIComponent(v.videoPath) +
+        '#t=0.1" preload="metadata" muted style="width:100%;height:100%;object-fit:cover;" onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0"></video>' +
+        '<span class="play-icon-overlay">▶</span>';
+    }
+
+    return '<div class="video-card" onclick="playVideo(' + v.id + ')">' +
+      '<div class="video-thumb">' + thumbContent + '</div>' +
+      '<div class="card-info">' +
+        '<div class="card-title">' + escHtml(v.title || t('untitled')) + '</div>' +
+        '<div class="card-tags">' + phonemes + '</div>' +
+        '<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">' +
+          (v.speaker ? escHtml(v.speaker) + ' · ' : '') + (v.date || '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
   }).join('');
 }
 
@@ -195,7 +258,8 @@ function toggleView() {
   currentView = currentView === 'table' ? 'card' : 'table';
   document.getElementById('table-view').style.display = currentView === 'table' ? '' : 'none';
   document.getElementById('card-view').style.display = currentView === 'card' ? '' : 'none';
-  document.getElementById('view-toggle').textContent = currentView === 'table' ? '📋 表格' : '🃏 卡片';
+  document.getElementById('view-toggle').innerHTML =
+    currentView === 'table' ? '📋 ' + t('tableView') : '🃏 ' + t('cardView');
   applyFilters();
 }
 
@@ -215,7 +279,7 @@ function toggleAdmin() {
   if (isAdmin) {
     isAdmin = false;
     document.getElementById('admin-btn').classList.remove('active');
-    document.getElementById('admin-btn').textContent = '🔒 管理';
+    document.getElementById('admin-btn').innerHTML = '🔒 ' + t('adminBtn');
     document.getElementById('admin-panel').style.display = 'none';
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
     applyFilters();
@@ -231,11 +295,11 @@ function verifyAdmin() {
   if (pw === ADMIN_PASSWORD) {
     isAdmin = true;
     document.getElementById('admin-btn').classList.add('active');
-    document.getElementById('admin-btn').textContent = '🔓 管理中';
+    document.getElementById('admin-btn').innerHTML = '🔓 ' + t('adminActive');
     document.getElementById('admin-panel').style.display = 'block';
     document.getElementById('password-modal').style.display = 'none';
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-    cancelEdit(); // Reset form
+    cancelEdit();
     applyFilters();
   } else {
     document.getElementById('password-error').style.display = 'block';
@@ -249,11 +313,11 @@ function closePasswordModal() {
 
 // ====== CRUD Operations ======
 async function saveEntry() {
-  const title = document.getElementById('form-title').value.trim();
+  const title = document.getElementById('form-title-input').value.trim();
   const phoneme = document.getElementById('form-phoneme').value.trim();
-  
-  if (!title || !phoneme) { alert('タイトルと音素は必須です。'); return; }
-  
+
+  if (!title || !phoneme) { alert(t('titleRequired')); return; }
+
   const editId = document.getElementById('form-edit-id').value;
   const entry = {
     title,
@@ -264,72 +328,116 @@ async function saveEntry() {
     date: document.getElementById('form-date').value,
     notes: document.getElementById('form-notes').value.trim(),
   };
-  
-  // Handle file upload
+
   const fileInput = document.getElementById('form-file');
   const urlInput = document.getElementById('form-url').value.trim();
-  
-  if (fileInput.files.length > 0) {
+
+  // Upload via local server (unlimited mode)
+  if (serverAvailable && fileInput.files.length > 0) {
     const file = fileInput.files[0];
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      entry.videoData = e.target.result;
-      if (editId) {
-        await updateVideo(parseInt(editId), entry);
-      } else {
-        entry.createdAt = new Date().toISOString();
-        await addVideo(entry);
-      }
-      cancelEdit();
-      loadAndRender();
-      alert('✅ 保存しました！');
-    };
-    reader.readAsDataURL(file);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const oldVideo = editId ? await getVideo(parseInt(editId)) : null;
+      if (editId && oldVideo) formData.append('oldPath', oldVideo.videoPath || '');
+
+      const resp = await fetch(VIDEO_SERVER_URL + '/api/upload', { method: 'POST', body: formData });
+      if (!resp.ok) throw new Error('Upload failed: ' + resp.status);
+      const result = await resp.json();
+      entry.videoPath = result.path;
+      entry.fileSize = formatSize(file.size);
+    } catch (e) {
+      alert('❌ Server upload failed: ' + e.message + '\nFalling back to IndexedDB...');
+      // Fall through to IndexedDB storage
+      return saveToIndexedDB(editId, entry, fileInput.files[0]);
+    }
+    await persistEntry(editId, entry);
+    cancelEdit();
+    loadAndRender();
+    alert(t('saved'));
     return;
   }
-  
-  if (urlInput) {
+
+  // Server mode with URL
+  if (serverAvailable && urlInput) {
+    entry.videoUrl = urlInput;
+    // If it's a local path, normalize
+    if (urlInput.startsWith('/') || urlInput.startsWith('./')) {
+      entry.videoPath = urlInput.replace(/^\.\//, '');
+      entry.videoUrl = VIDEO_SERVER_URL + VIDEO_SERVER_DIR + encodeURIComponent(entry.videoPath);
+    }
+  } else if (urlInput) {
     entry.videoUrl = urlInput;
   }
-  
+
+  // IndexedDB blob mode
+  if (!serverAvailable && fileInput.files.length > 0) {
+    return saveToIndexedDB(editId, entry, fileInput.files[0]);
+  }
+
+  await persistEntry(editId, entry);
+  cancelEdit();
+  loadAndRender();
+  alert(t('saved'));
+}
+
+function saveToIndexedDB(editId, entry, file) {
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    entry.videoData = e.target.result;
+    entry.fileSize = formatSize(file.size);
+    await persistEntry(editId, entry);
+    cancelEdit();
+    loadAndRender();
+    alert(t('saved'));
+  };
+  reader.readAsDataURL(file);
+}
+
+async function persistEntry(editId, entry) {
   if (editId) {
     await updateVideo(parseInt(editId), entry);
   } else {
     entry.createdAt = new Date().toISOString();
     await addVideo(entry);
   }
-  
-  cancelEdit();
-  loadAndRender();
-  alert('✅ 保存しました！');
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '-';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  if (bytes < 1024*1024*1024) return (bytes/(1024*1024)).toFixed(1) + ' MB';
+  return (bytes/(1024*1024*1024)).toFixed(2) + ' GB';
 }
 
 async function editEntry(id) {
   const video = await getVideo(id);
   if (!video) return;
-  
-  document.getElementById('form-title').value = video.title || '';
+
+  document.getElementById('form-title-input').value = video.title || '';
   document.getElementById('form-phoneme').value = video.phoneme || '';
   document.getElementById('form-ipa').value = video.ipa || '';
   document.getElementById('form-language').value = video.language || 'ja';
   document.getElementById('form-speaker').value = video.speaker || '';
   document.getElementById('form-date').value = video.date || '';
   document.getElementById('form-notes').value = video.notes || '';
-  document.getElementById('form-url').value = video.videoUrl || '';
+  document.getElementById('form-url').value = video.videoUrl || video.videoPath || '';
   document.getElementById('form-edit-id').value = id;
-  document.getElementById('form-title').textContent = '✏️ 動画を編集';
-  
+  document.getElementById('form-heading').innerHTML = '✏️ ' + t('editVideo');
+  document.getElementById('file-name').textContent = t('fileDropHint');
+
   document.getElementById('admin-panel').scrollIntoView({ behavior: 'smooth' });
 }
 
 async function deleteEntry(id) {
-  if (!confirm('この動画を削除してもよろしいですか？この操作は取り消せません。')) return;
+  if (!confirm(t('deleteConfirm'))) return;
   await deleteVideo(id);
   loadAndRender();
 }
 
 function cancelEdit() {
-  document.getElementById('form-title').value = '';
+  document.getElementById('form-title-input').value = '';
   document.getElementById('form-phoneme').value = '';
   document.getElementById('form-ipa').value = '';
   document.getElementById('form-language').value = 'ja';
@@ -338,19 +446,28 @@ function cancelEdit() {
   document.getElementById('form-notes').value = '';
   document.getElementById('form-url').value = '';
   document.getElementById('form-file').value = '';
-  document.getElementById('file-name').textContent = 'クリックして動画を選択（またはドラッグ＆ドロップ）';
+  document.getElementById('file-name').textContent = t('fileDropHint');
   document.getElementById('form-edit-id').value = '';
-  document.getElementById('form-title').textContent = '➕ 動画を追加';
+  document.getElementById('form-heading').innerHTML = '➕ ' + t('addVideo');
 }
 
 // ====== File handling ======
-document.getElementById('form-file').addEventListener('change', function() {
-  const name = this.files.length > 0 ? this.files[0].name : 'クリックして動画を選択';
-  document.getElementById('file-name').textContent = '📹 ' + name;
-});
+function onFileSelected() {
+  const fileInput = document.getElementById('form-file');
+  const name = fileInput.files.length > 0 ? t('fileSelected') + fileInput.files[0].name : t('fileDropHint');
+  document.getElementById('file-name').textContent = name;
+  // Auto-fill title from filename
+  if (fileInput.files.length > 0) {
+    const fileName = fileInput.files[0].name.replace(/\.[^/.]+$/, '');
+    const titleInput = document.getElementById('form-title-input');
+    if (!titleInput.value) {
+      titleInput.value = fileName;
+    }
+  }
+}
 
 // Drag & Drop
-const dropZone = document.querySelector('.file-drop-zone');
+const dropZone = document.getElementById('file-drop-zone');
 if (dropZone) {
   dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor = 'var(--accent)'; });
   dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = ''; });
@@ -358,11 +475,12 @@ if (dropZone) {
     e.preventDefault();
     dropZone.style.borderColor = '';
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('video/')) {
+    if (file) {
       document.getElementById('form-file').files = e.dataTransfer.files;
-      document.getElementById('file-name').textContent = '📹 ' + file.name;
-      if (!document.getElementById('form-title').value) {
-        document.getElementById('form-title').value = file.name.replace(/\.[^/.]+$/, '');
+      document.getElementById('file-name').textContent = t('fileSelected') + file.name;
+      const titleInput = document.getElementById('form-title-input');
+      if (!titleInput.value) {
+        titleInput.value = file.name.replace(/\.[^/.]+$/, '');
       }
     }
   });
@@ -372,26 +490,33 @@ if (dropZone) {
 async function playVideo(id) {
   const video = await getVideo(id);
   if (!video) return;
-  
+
   const modal = document.getElementById('player-modal');
   const player = document.getElementById('player-video');
-  
-  player.src = video.videoData || video.videoUrl || '';
-  
-  const langNames = { ja: '日本語', zh: '中国語', en: '英語', ko: '韓国語', other: 'その他' };
-  
-  document.getElementById('player-info').innerHTML = `
-    <h3>${escHtml(video.title || '無題')}</h3>
-    <div class="player-meta">
-      <span class="phoneme-tag">🔤 ${escHtml(video.phoneme)}</span>
-      ${video.ipa ? `<span class="phoneme-tag">IPA: ${escHtml(video.ipa)}</span>` : ''}
-      <span class="phoneme-tag">🌐 ${langNames[video.language] || video.language}</span>
-      ${video.speaker ? `<span class="phoneme-tag">👤 ${escHtml(video.speaker)}</span>` : ''}
-      ${video.date ? `<span class="phoneme-tag">📅 ${video.date}</span>` : ''}
-    </div>
-    ${video.notes ? `<div class="player-notes">📝 ${escHtml(video.notes)}</div>` : ''}
-  `;
-  
+
+  // Determine video source
+  let src = '';
+  if (serverAvailable && video.videoPath) {
+    src = VIDEO_SERVER_URL + VIDEO_SERVER_DIR + encodeURIComponent(video.videoPath);
+  } else if (video.videoUrl) {
+    src = video.videoUrl;
+  } else if (video.videoData) {
+    src = video.videoData;
+  }
+
+  player.src = src;
+
+  document.getElementById('player-info').innerHTML =
+    '<h3>' + escHtml(video.title || t('untitled')) + '</h3>' +
+    '<div class="player-meta">' +
+      '<span class="phoneme-tag">🔤 ' + escHtml(video.phoneme) + '</span>' +
+      (video.ipa ? '<span class="phoneme-tag">IPA: ' + escHtml(video.ipa) + '</span>' : '') +
+      '<span class="phoneme-tag">🌐 ' + langName(video.language) + '</span>' +
+      (video.speaker ? '<span class="phoneme-tag">👤 ' + escHtml(video.speaker) + '</span>' : '') +
+      (video.date ? '<span class="phoneme-tag">📅 ' + video.date + '</span>' : '') +
+    '</div>' +
+    (video.notes ? '<div class="player-notes">📝 ' + escHtml(video.notes) + '</div>' : '');
+
   modal.style.display = 'flex';
   player.play().catch(() => {});
 }
@@ -406,17 +531,17 @@ function closePlayer() {
 // ====== Export / Import ======
 async function exportData() {
   const videos = await getAllVideos();
-  // Strip video data blobs for export (too large)
+  // Strip video binary data for export
   const exportData = videos.map(v => {
     const { videoData, ...rest } = v;
     return rest;
   });
-  
+
   const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `ultrasound-db-export-${new Date().toISOString().split('T')[0]}.json`;
+  a.download = 'ultrasound-db-export-' + new Date().toISOString().split('T')[0] + '.json';
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -424,12 +549,12 @@ async function exportData() {
 async function importData(event) {
   const file = event.target.files[0];
   if (!file) return;
-  
-  if (!confirm('インポートすると既存のデータに追加されます。続行しますか？')) {
+
+  if (!confirm(t('importConfirmExisting'))) {
     event.target.value = '';
     return;
   }
-  
+
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
@@ -437,13 +562,15 @@ async function importData(event) {
       let count = 0;
       for (const item of data) {
         item.createdAt = item.createdAt || new Date().toISOString();
+        // Don't import videoData blobs — they're stripped on export
+        // videoPath/videoUrl remain intact
         await addVideo(item);
         count++;
       }
       loadAndRender();
-      alert(`✅ ${count}件のデータをインポートしました。`);
+      alert('✅ ' + count + t('imported'));
     } catch (err) {
-      alert('❌ JSONの解析に失敗しました: ' + err.message);
+      alert(t('importFail') + err.message);
     }
     event.target.value = '';
   };
@@ -456,15 +583,13 @@ document.addEventListener('keydown', (e) => {
     closePlayer();
     closePasswordModal();
   }
-  // Ctrl+F / Cmd+F focus search
-  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-    // Don't prevent default - let browser search work too
-  }
 });
 
 // ====== Init ======
 document.addEventListener('DOMContentLoaded', async () => {
   await openDB();
+  await requestPersistence();
+  await checkVideoServer();
   document.getElementById('form-date').value = new Date().toISOString().split('T')[0];
   loadAndRender();
 });
