@@ -162,6 +162,14 @@ body {
 
 .empty-row td { text-align: center; padding: 40px; color: var(--text-muted); }
 
+/* ====== Pagination ====== */
+.pagination {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 16px 0; border-top: 1px solid var(--border);
+}
+.pagination .btn-sm { font-size: 0.8rem; padding: 6px 14px; }
+.row-cb { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+
 /* ====== Card View ====== */
 .card-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

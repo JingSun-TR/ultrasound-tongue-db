@@ -37,11 +37,13 @@
 
 <main class="main">
   <div id="table-view" class="table-container"><table class="data-table"><thead><tr>
+    <th style="width:30px"><input type="checkbox" id="select-all" onclick="toggleSelectAll()" title="全選"></th>
     <th data-i18n="thNo">#</th><th data-i18n="thTitle">タイトル</th>
     <th data-i18n="thRep">回</th>
     <th data-i18n="thLang">言語</th><th data-i18n="thSpeaker">発話者</th><th data-i18n="thDate">日付</th>
     <th data-i18n="thPlay">再生</th><th class="admin-only" style="display:none" data-i18n="thActions">操作</th>
-  </tr></thead><tbody id="table-body"></tbody></table></div>
+  </tr></thead><tbody id="table-body"></tbody></table>
+  <div id="pagination" class="pagination" style="display:none"></div></div>
   <div id="card-view" class="card-grid" style="display:none"></div>
 </main>
 
@@ -164,6 +166,9 @@ let allVideos = [];
 let repoData = [];
 let localEdits = {};
 let nextLocalId = -1;
+let currentPage = 1;
+const PAGE_SIZE = 100;
+let selectedIds = new Set();
 
 function updateAdminUI() {
   const btn = document.getElementById('admin-btn');
@@ -228,37 +233,97 @@ function mergeData() {
 }
 
 // ====== Render ======
+let filteredVideos = [];
 function applyFilters() {
   const q = (document.getElementById('search-input').value||'').toLowerCase().trim();
-  let filtered = allVideos;
+  filteredVideos = allVideos;
   if (q) {
     const terms = q.split(/\s+/).filter(Boolean);
-    filtered = allVideos.filter(v => {
+    filteredVideos = allVideos.filter(v => {
       const s = [v.title,v.phoneme,v.ipa,v.speaker,v.language,v.date].filter(Boolean).join(' ').toLowerCase();
       return terms.every(t => s.includes(t));
     });
   }
-  if (currentView === 'table') renderTable(filtered); else renderCards(filtered);
+  currentPage = 1;
+  if (currentView === 'table') renderPage(); else renderCards(filteredVideos);
 }
 
 function langLabel(code) { return t('lang_'+code) || code; }
 
-function renderTable(videos) {
+function renderPage() {
+  const totalPages = Math.ceil(filteredVideos.length / PAGE_SIZE) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filteredVideos.slice(start, start + PAGE_SIZE);
+
   const tbody = document.getElementById('table-body');
-  if (!videos.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-row">'+t('noData')+'</td></tr>'; return; }
-  tbody.innerHTML = videos.map((v,i) => {
-    const hasVid = !!v.videoUrl || !!v.videoPath;
-    const actions = isAdmin ? '<td><button class="edit-btn" onclick="editEntry('+v.id+')">✏️</button><button class="del-btn" onclick="deleteEntry('+v.id+')">🗑</button></td>' : '';
-    return '<tr><td>'+(i+1)+'</td>'+
-      '<td>'+esc(v.title||'')+(v._source==='local'?' <span style="color:#ff0;font-size:10px">'+t('local')+'</span>':'')+'</td>'+
-      '<td style="text-align:center">'+(v.repetition||1)+'</td>'+
-      '<td>'+langLabel(v.language)+'</td><td>'+esc(v.speaker||'')+'</td>'+
-      '<td>'+(v.date||'')+'</td>'+
-      '<td>'+(hasVid?'<button class="play-btn" onclick="event.stopPropagation();playVideo('+v.id+')">▶</button>':'<span style="color:#888">-</span>')+'</td>'+
-      actions+'</tr>';
-  }).join('');
+  if (!page.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-row">'+t('noData')+'</td></tr>'; }
+  else {
+    tbody.innerHTML = page.map((v,i) => {
+      const globalIdx = start + i + 1;
+      const hasVid = !!v.videoUrl || !!v.videoPath;
+      const checked = selectedIds.has(v.id) ? ' checked' : '';
+      const actions = isAdmin ? '<td><button class="edit-btn" onclick="editEntry('+v.id+')">✏️</button><button class="del-btn" onclick="deleteEntry('+v.id+')">🗑</button></td>' : '';
+      return '<tr><td><input type="checkbox" class="row-cb" data-id="'+v.id+'"'+checked+' onchange="toggleSelect('+v.id+',this.checked)"></td>'+
+        '<td>'+globalIdx+'</td>'+
+        '<td>'+esc(v.title||'')+(v._source==='local'?' <span style="color:#ff0;font-size:10px">'+t('local')+'</span>':'')+'</td>'+
+        '<td style="text-align:center">'+(v.repetition||1)+'</td>'+
+        '<td>'+langLabel(v.language)+'</td><td>'+esc(v.speaker||'')+'</td>'+
+        '<td>'+(v.date||'')+'</td>'+
+        '<td>'+(hasVid?'<button class="play-btn" onclick="event.stopPropagation();playVideo('+v.id+')">▶</button>':'<span style="color:#888">-</span>')+'</td>'+
+        actions+'</tr>';
+    }).join('');
+  }
   document.querySelectorAll('.admin-only').forEach(e => e.style.display = isAdmin ? '' : 'none');
+  document.getElementById('select-all').checked = page.length > 0 && page.every(v => selectedIds.has(v.id));
+  renderPagination(totalPages);
 }
+
+function renderPagination(totalPages) {
+  const pg = document.getElementById('pagination');
+  if (totalPages <= 1) { pg.style.display = 'none'; return; }
+  pg.style.display = 'flex';
+  pg.innerHTML =
+    '<button class="btn btn-sm" onclick="goPage('+(currentPage-1)+')" '+(currentPage<=1?'disabled':'')+'>◀ 前</button>'+
+    '<span style="padding:4px 12px;font-size:0.85rem">'+currentPage+' / '+totalPages+'</span>'+
+    '<button class="btn btn-sm" onclick="goPage('+(currentPage+1)+')" '+(currentPage>=totalPages?'disabled':'')+'>次 ▶</button>'+
+    (selectedIds.size > 0
+      ? '<button class="btn btn-sm" style="background:#900;color:#fff;margin-left:12px" onclick="exportSelected()">📥 選択エクスポート ('+selectedIds.size+')</button>'
+      : '');
+}
+
+function goPage(p) {
+  const total = Math.ceil(filteredVideos.length / PAGE_SIZE) || 1;
+  if (p < 1 || p > total) return;
+  currentPage = p;
+  renderPage();
+}
+
+function toggleSelect(id, checked) {
+  if (checked) selectedIds.add(id); else selectedIds.delete(id);
+  document.getElementById('select-all').checked = false;
+  renderPagination(Math.ceil(filteredVideos.length / PAGE_SIZE) || 1);
+}
+
+function toggleSelectAll() {
+  const checked = document.getElementById('select-all').checked;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filteredVideos.slice(start, start + PAGE_SIZE);
+  page.forEach(v => { if (checked) selectedIds.add(v.id); else selectedIds.delete(v.id); });
+  renderPage();
+}
+
+function exportSelected() {
+  const sel = allVideos.filter(v => selectedIds.has(v.id));
+  if (!sel.length) return;
+  const exp = sel.map(v => { const {videoData,_source,...r}=v; return r; });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(exp,null,2)],{type:'application/json'}));
+  a.download = 'ultrasound-corpus-selected-'+new Date().toISOString().split('T')[0]+'.json';
+  a.click();
+}
+
+function renderTable(videos) {}
 
 function renderCards(videos) {
   const grid = document.getElementById('card-view');
