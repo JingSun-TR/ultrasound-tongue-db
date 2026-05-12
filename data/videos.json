@@ -11,10 +11,11 @@
     "videoPath": "zutsusu.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "402.0 KB",
-    "id": 1
+    "id": 1,
+    "repetition": 1
   },
   {
-    "title": "あ1",
+    "title": "あ",
     "phoneme": "/a/",
     "ipa": "",
     "language": "ja",
@@ -25,10 +26,11 @@
     "createdAt": "2026-05-12T12:56:35.111Z",
     "id": 2,
     "videoUrl": "videos/jp_a1.mp4",
-    "videoPath": "jp_a1.mp4"
+    "videoPath": "jp_a1.mp4",
+    "repetition": 1
   },
   {
-    "title": "あ2",
+    "title": "あ",
     "phoneme": "/a/",
     "ipa": "",
     "language": "ja",
@@ -39,10 +41,11 @@
     "createdAt": "2026-05-12T12:57:01.072Z",
     "id": 3,
     "videoUrl": "videos/jp_a2.mp4",
-    "videoPath": "jp_a2.mp4"
+    "videoPath": "jp_a2.mp4",
+    "repetition": 2
   },
   {
-    "title": "あ3",
+    "title": "あ",
     "phoneme": "/a/",
     "ipa": "",
     "language": "ja",
@@ -53,10 +56,11 @@
     "createdAt": "2026-05-12T12:57:44.702Z",
     "id": 4,
     "videoUrl": "videos/jp_a3.mp4",
-    "videoPath": "jp_a3.mp4"
+    "videoPath": "jp_a3.mp4",
+    "repetition": 3
   },
   {
-    "title": "あいうえお1",
+    "title": "あいうえお",
     "phoneme": "/a,i,u,e,o/",
     "ipa": "",
     "language": "ja",
@@ -67,10 +71,11 @@
     "createdAt": "2026-05-12T08:53:15.906Z",
     "id": 5,
     "videoUrl": "videos/aiueo1.mp4",
-    "videoPath": "aiueo1.mp4"
+    "videoPath": "aiueo1.mp4",
+    "repetition": 1
   },
   {
-    "title": "い1",
+    "title": "い",
     "phoneme": "i",
     "ipa": "",
     "language": "ja",
@@ -81,10 +86,11 @@
     "videoPath": "jp_i1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "231.6 KB",
-    "id": 6
+    "id": 6,
+    "repetition": 1
   },
   {
-    "title": "い2",
+    "title": "い",
     "phoneme": "i",
     "ipa": "",
     "language": "ja",
@@ -95,10 +101,11 @@
     "videoPath": "jp_i2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "404.1 KB",
-    "id": 7
+    "id": 7,
+    "repetition": 2
   },
   {
-    "title": "い3",
+    "title": "い",
     "phoneme": "i",
     "ipa": "",
     "language": "ja",
@@ -109,10 +116,11 @@
     "videoPath": "jp_i3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "335.0 KB",
-    "id": 8
+    "id": 8,
+    "repetition": 3
   },
   {
-    "title": "う1",
+    "title": "う",
     "phoneme": "u",
     "ipa": "",
     "language": "ja",
@@ -123,10 +131,11 @@
     "videoPath": "jp_u1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "233.0 KB",
-    "id": 9
+    "id": 9,
+    "repetition": 1
   },
   {
-    "title": "う2",
+    "title": "う",
     "phoneme": "u",
     "ipa": "",
     "language": "ja",
@@ -137,10 +146,11 @@
     "videoPath": "jp_u2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "375.4 KB",
-    "id": 10
+    "id": 10,
+    "repetition": 2
   },
   {
-    "title": "う3",
+    "title": "う",
     "phoneme": "u",
     "ipa": "",
     "language": "ja",
@@ -151,10 +161,11 @@
     "videoPath": "jp_u3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "392.9 KB",
-    "id": 11
+    "id": 11,
+    "repetition": 3
   },
   {
-    "title": "え1",
+    "title": "え",
     "phoneme": "/e/",
     "ipa": "",
     "language": "ja",
@@ -165,10 +176,11 @@
     "createdAt": "2026-05-12T12:58:16.794Z",
     "id": 12,
     "videoUrl": "videos/jp_e1.mp4",
-    "videoPath": "jp_e1.mp4"
+    "videoPath": "jp_e1.mp4",
+    "repetition": 1
   },
   {
-    "title": "え2",
+    "title": "え",
     "phoneme": "e",
     "ipa": "",
     "language": "ja",
@@ -179,10 +191,11 @@
     "videoPath": "jp_e2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "337.9 KB",
-    "id": 13
+    "id": 13,
+    "repetition": 2
   },
   {
-    "title": "え3",
+    "title": "え",
     "phoneme": "e",
     "ipa": "",
     "language": "ja",
@@ -193,10 +206,11 @@
     "videoPath": "jp_e3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "313.5 KB",
-    "id": 14
+    "id": 14,
+    "repetition": 3
   },
   {
-    "title": "お1",
+    "title": "お",
     "phoneme": "o",
     "ipa": "",
     "language": "ja",
@@ -207,10 +221,11 @@
     "videoPath": "jp_o1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "297.9 KB",
-    "id": 15
+    "id": 15,
+    "repetition": 1
   },
   {
-    "title": "お2",
+    "title": "お",
     "phoneme": "o",
     "ipa": "",
     "language": "ja",
@@ -221,10 +236,11 @@
     "videoPath": "jp_o2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "432.8 KB",
-    "id": 16
+    "id": 16,
+    "repetition": 2
   },
   {
-    "title": "お3",
+    "title": "お",
     "phoneme": "o",
     "ipa": "",
     "language": "ja",
@@ -235,10 +251,11 @@
     "videoPath": "jp_o3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "399.3 KB",
-    "id": 17
+    "id": 17,
+    "repetition": 3
   },
   {
-    "title": "す1",
+    "title": "す",
     "phoneme": "su",
     "ipa": "",
     "language": "ja",
@@ -249,10 +266,11 @@
     "videoPath": "jp_su1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "315.6 KB",
-    "id": 18
+    "id": 18,
+    "repetition": 1
   },
   {
-    "title": "す2",
+    "title": "す",
     "phoneme": "su",
     "ipa": "",
     "language": "ja",
@@ -263,10 +281,11 @@
     "videoPath": "jp_su2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "346.2 KB",
-    "id": 19
+    "id": 19,
+    "repetition": 2
   },
   {
-    "title": "す3",
+    "title": "す",
     "phoneme": "su",
     "ipa": "",
     "language": "ja",
@@ -277,10 +296,11 @@
     "videoPath": "jp_su3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "331.4 KB",
-    "id": 20
+    "id": 20,
+    "repetition": 3
   },
   {
-    "title": "ず1",
+    "title": "ず",
     "phoneme": "zu",
     "ipa": "",
     "language": "ja",
@@ -291,10 +311,11 @@
     "videoPath": "jp_zu1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "240.3 KB",
-    "id": 21
+    "id": 21,
+    "repetition": 1
   },
   {
-    "title": "ず2",
+    "title": "ず",
     "phoneme": "zu",
     "ipa": "",
     "language": "ja",
@@ -305,10 +326,11 @@
     "videoPath": "jp_zu2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "347.2 KB",
-    "id": 22
+    "id": 22,
+    "repetition": 2
   },
   {
-    "title": "ず3",
+    "title": "ず",
     "phoneme": "zu",
     "ipa": "",
     "language": "ja",
@@ -319,10 +341,11 @@
     "videoPath": "jp_zu3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "363.3 KB",
-    "id": 23
+    "id": 23,
+    "repetition": 3
   },
   {
-    "title": "つ1",
+    "title": "つ",
     "phoneme": "tsu",
     "ipa": "",
     "language": "ja",
@@ -333,10 +356,11 @@
     "videoPath": "jp_tsu1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "243.1 KB",
-    "id": 24
+    "id": 24,
+    "repetition": 1
   },
   {
-    "title": "つ2",
+    "title": "つ",
     "phoneme": "tsu",
     "ipa": "",
     "language": "ja",
@@ -347,10 +371,11 @@
     "videoPath": "jp_tsu2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "338.5 KB",
-    "id": 25
+    "id": 25,
+    "repetition": 2
   },
   {
-    "title": "つ3",
+    "title": "つ",
     "phoneme": "tsu",
     "ipa": "",
     "language": "ja",
@@ -361,10 +386,11 @@
     "videoPath": "jp_tsu3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "283.8 KB",
-    "id": 26
+    "id": 26,
+    "repetition": 3
   },
   {
-    "title": "a,wo,e,yi,wu,yu1",
+    "title": "a,wo,e,yi,wu,yu",
     "phoneme": "a,o,e,i,u,y",
     "ipa": "",
     "language": "zh",
@@ -375,10 +401,11 @@
     "createdAt": "2026-05-12T08:54:53.818Z",
     "id": 27,
     "videoUrl": "videos/aoeiuy1.mp4",
-    "videoPath": "aoeiuy1.mp4"
+    "videoPath": "aoeiuy1.mp4",
+    "repetition": 1
   },
   {
-    "title": "a,wo,e,yi,wu,yu2",
+    "title": "a,wo,e,yi,wu,yu",
     "phoneme": "a,o,e,i,u,y",
     "ipa": "",
     "language": "zh",
@@ -389,10 +416,11 @@
     "createdAt": "2026-05-12T08:56:16.981Z",
     "id": 28,
     "videoUrl": "videos/aoeiuy2.mp4",
-    "videoPath": "aoeiuy2.mp4"
+    "videoPath": "aoeiuy2.mp4",
+    "repetition": 2
   },
   {
-    "title": "a1",
+    "title": "a",
     "phoneme": "a",
     "ipa": "",
     "language": "zh",
@@ -403,10 +431,11 @@
     "createdAt": "2026-05-12T08:49:32.242Z",
     "id": 29,
     "videoUrl": "videos/a1.mp4",
-    "videoPath": "a1.mp4"
+    "videoPath": "a1.mp4",
+    "repetition": 1
   },
   {
-    "title": "a2",
+    "title": "a",
     "phoneme": "a",
     "ipa": "",
     "language": "zh",
@@ -417,10 +446,11 @@
     "createdAt": "2026-05-12T08:50:21.078Z",
     "id": 30,
     "videoUrl": "videos/a2.mp4",
-    "videoPath": "a2.mp4"
+    "videoPath": "a2.mp4",
+    "repetition": 2
   },
   {
-    "title": "a3",
+    "title": "a",
     "phoneme": "a",
     "ipa": "",
     "language": "zh",
@@ -431,10 +461,11 @@
     "createdAt": "2026-05-12T08:51:32.019Z",
     "id": 31,
     "videoUrl": "videos/a3.mp4",
-    "videoPath": "a3.mp4"
+    "videoPath": "a3.mp4",
+    "repetition": 3
   },
   {
-    "title": "chi1",
+    "title": "chi",
     "phoneme": "chi",
     "ipa": "",
     "language": "zh",
@@ -445,10 +476,11 @@
     "createdAt": "2026-05-12T08:57:31.435Z",
     "id": 32,
     "videoUrl": "videos/chi1.mp4",
-    "videoPath": "chi1.mp4"
+    "videoPath": "chi1.mp4",
+    "repetition": 1
   },
   {
-    "title": "chi2",
+    "title": "chi",
     "phoneme": "chi",
     "ipa": "",
     "language": "zh",
@@ -459,10 +491,11 @@
     "createdAt": "2026-05-12T08:58:04.332Z",
     "id": 33,
     "videoUrl": "videos/chi2.mp4",
-    "videoPath": "chi2.mp4"
+    "videoPath": "chi2.mp4",
+    "repetition": 2
   },
   {
-    "title": "chi3",
+    "title": "chi",
     "phoneme": "chi",
     "ipa": "",
     "language": "zh",
@@ -473,10 +506,11 @@
     "createdAt": "2026-05-12T12:26:05.318Z",
     "id": 34,
     "videoUrl": "videos/chi3.mp4",
-    "videoPath": "chi3.mp4"
+    "videoPath": "chi3.mp4",
+    "repetition": 3
   },
   {
-    "title": "ci1",
+    "title": "ci",
     "phoneme": "ci",
     "ipa": "",
     "language": "zh",
@@ -487,10 +521,11 @@
     "createdAt": "2026-05-12T12:27:15.114Z",
     "id": 35,
     "videoUrl": "videos/ci1.mp4",
-    "videoPath": "ci1.mp4"
+    "videoPath": "ci1.mp4",
+    "repetition": 1
   },
   {
-    "title": "ci2",
+    "title": "ci",
     "phoneme": "ci",
     "ipa": "",
     "language": "zh",
@@ -501,10 +536,11 @@
     "createdAt": "2026-05-12T12:28:15.626Z",
     "id": 36,
     "videoUrl": "videos/ci2.mp4",
-    "videoPath": "ci2.mp4"
+    "videoPath": "ci2.mp4",
+    "repetition": 2
   },
   {
-    "title": "ci3",
+    "title": "ci",
     "phoneme": "ci",
     "ipa": "",
     "language": "zh",
@@ -515,10 +551,11 @@
     "createdAt": "2026-05-12T12:28:58.686Z",
     "id": 37,
     "videoUrl": "videos/ci3.mp4",
-    "videoPath": "ci3.mp4"
+    "videoPath": "ci3.mp4",
+    "repetition": 3
   },
   {
-    "title": "e1",
+    "title": "e",
     "phoneme": "e",
     "ipa": "",
     "language": "zh",
@@ -529,10 +566,11 @@
     "createdAt": "2026-05-12T12:29:25.317Z",
     "id": 38,
     "videoUrl": "videos/e1.mp4",
-    "videoPath": "e1.mp4"
+    "videoPath": "e1.mp4",
+    "repetition": 1
   },
   {
-    "title": "e2",
+    "title": "e",
     "phoneme": "e",
     "ipa": "",
     "language": "zh",
@@ -543,10 +581,11 @@
     "createdAt": "2026-05-12T12:30:01.514Z",
     "id": 39,
     "videoUrl": "videos/e2.mp4",
-    "videoPath": "e2.mp4"
+    "videoPath": "e2.mp4",
+    "repetition": 2
   },
   {
-    "title": "e3",
+    "title": "e",
     "phoneme": "e",
     "ipa": "",
     "language": "zh",
@@ -557,10 +596,11 @@
     "createdAt": "2026-05-12T12:49:21.596Z",
     "id": 40,
     "videoUrl": "videos/e3.mp4",
-    "videoPath": "e3.mp4"
+    "videoPath": "e3.mp4",
+    "repetition": 3
   },
   {
-    "title": "i1",
+    "title": "i",
     "phoneme": "i",
     "ipa": "",
     "language": "zh",
@@ -571,10 +611,11 @@
     "createdAt": "2026-05-12T12:50:09.958Z",
     "id": 41,
     "videoUrl": "videos/i1.mp4",
-    "videoPath": "i1.mp4"
+    "videoPath": "i1.mp4",
+    "repetition": 1
   },
   {
-    "title": "i2",
+    "title": "i",
     "phoneme": "i",
     "ipa": "",
     "language": "zh",
@@ -585,10 +626,11 @@
     "createdAt": "2026-05-12T12:50:31.946Z",
     "id": 42,
     "videoUrl": "videos/i2.mp4",
-    "videoPath": "i2.mp4"
+    "videoPath": "i2.mp4",
+    "repetition": 2
   },
   {
-    "title": "i3",
+    "title": "i",
     "phoneme": "i",
     "ipa": "",
     "language": "zh",
@@ -599,10 +641,11 @@
     "createdAt": "2026-05-12T12:50:47.588Z",
     "id": 43,
     "videoUrl": "videos/i3.mp4",
-    "videoPath": "i3.mp4"
+    "videoPath": "i3.mp4",
+    "repetition": 3
   },
   {
-    "title": "o1",
+    "title": "o",
     "phoneme": "o",
     "ipa": "",
     "language": "zh",
@@ -613,10 +656,11 @@
     "videoPath": "o1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "329.9 KB",
-    "id": 44
+    "id": 44,
+    "repetition": 1
   },
   {
-    "title": "o2",
+    "title": "o",
     "phoneme": "o",
     "ipa": "",
     "language": "zh",
@@ -627,10 +671,11 @@
     "videoPath": "o2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "425.7 KB",
-    "id": 45
+    "id": 45,
+    "repetition": 2
   },
   {
-    "title": "o3",
+    "title": "o",
     "phoneme": "o",
     "ipa": "",
     "language": "zh",
@@ -641,10 +686,11 @@
     "videoPath": "o3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "297.0 KB",
-    "id": 46
+    "id": 46,
+    "repetition": 3
   },
   {
-    "title": "shi1",
+    "title": "shi",
     "phoneme": "shi",
     "ipa": "",
     "language": "zh",
@@ -655,10 +701,11 @@
     "videoPath": "shi1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "351.9 KB",
-    "id": 47
+    "id": 47,
+    "repetition": 1
   },
   {
-    "title": "shi2",
+    "title": "shi",
     "phoneme": "shi",
     "ipa": "",
     "language": "zh",
@@ -669,10 +716,11 @@
     "videoPath": "shi2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "512.9 KB",
-    "id": 48
+    "id": 48,
+    "repetition": 2
   },
   {
-    "title": "shi3",
+    "title": "shi",
     "phoneme": "shi",
     "ipa": "",
     "language": "zh",
@@ -683,10 +731,11 @@
     "videoPath": "shi3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "368.9 KB",
-    "id": 49
+    "id": 49,
+    "repetition": 3
   },
   {
-    "title": "si1",
+    "title": "si",
     "phoneme": "si",
     "ipa": "",
     "language": "zh",
@@ -697,10 +746,11 @@
     "videoPath": "si1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "267.2 KB",
-    "id": 50
+    "id": 50,
+    "repetition": 1
   },
   {
-    "title": "si2",
+    "title": "si",
     "phoneme": "si",
     "ipa": "",
     "language": "zh",
@@ -711,10 +761,11 @@
     "videoPath": "si2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "500.3 KB",
-    "id": 51
+    "id": 51,
+    "repetition": 2
   },
   {
-    "title": "si3",
+    "title": "si",
     "phoneme": "si",
     "ipa": "",
     "language": "zh",
@@ -725,10 +776,11 @@
     "videoPath": "si3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "466.0 KB",
-    "id": 52
+    "id": 52,
+    "repetition": 3
   },
   {
-    "title": "u1",
+    "title": "u",
     "phoneme": "u",
     "ipa": "",
     "language": "zh",
@@ -739,10 +791,11 @@
     "videoPath": "u1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "305.3 KB",
-    "id": 53
+    "id": 53,
+    "repetition": 1
   },
   {
-    "title": "u2",
+    "title": "u",
     "phoneme": "u",
     "ipa": "",
     "language": "zh",
@@ -753,10 +806,11 @@
     "videoPath": "u2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "402.1 KB",
-    "id": 54
+    "id": 54,
+    "repetition": 2
   },
   {
-    "title": "u3",
+    "title": "u",
     "phoneme": "u",
     "ipa": "",
     "language": "zh",
@@ -767,10 +821,11 @@
     "videoPath": "u3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "286.0 KB",
-    "id": 55
+    "id": 55,
+    "repetition": 3
   },
   {
-    "title": "y1",
+    "title": "y",
     "phoneme": "y",
     "ipa": "",
     "language": "zh",
@@ -781,10 +836,11 @@
     "videoPath": "y1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "313.3 KB",
-    "id": 56
+    "id": 56,
+    "repetition": 1
   },
   {
-    "title": "y2",
+    "title": "y",
     "phoneme": "y",
     "ipa": "",
     "language": "zh",
@@ -795,10 +851,11 @@
     "videoPath": "y2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "410.1 KB",
-    "id": 57
+    "id": 57,
+    "repetition": 2
   },
   {
-    "title": "y3",
+    "title": "y",
     "phoneme": "y",
     "ipa": "",
     "language": "zh",
@@ -809,10 +866,11 @@
     "videoPath": "y3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "272.6 KB",
-    "id": 58
+    "id": 58,
+    "repetition": 3
   },
   {
-    "title": "zhi1",
+    "title": "zhi",
     "phoneme": "zhi",
     "ipa": "",
     "language": "zh",
@@ -823,10 +881,11 @@
     "videoPath": "zhi1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "311.0 KB",
-    "id": 59
+    "id": 59,
+    "repetition": 1
   },
   {
-    "title": "zhi2",
+    "title": "zhi",
     "phoneme": "zhi",
     "ipa": "",
     "language": "zh",
@@ -837,10 +896,11 @@
     "videoPath": "zhi2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "449.1 KB",
-    "id": 60
+    "id": 60,
+    "repetition": 2
   },
   {
-    "title": "zhi3",
+    "title": "zhi",
     "phoneme": "zhi",
     "ipa": "",
     "language": "zh",
@@ -851,10 +911,11 @@
     "videoPath": "zhi3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "308.3 KB",
-    "id": 61
+    "id": 61,
+    "repetition": 3
   },
   {
-    "title": "zi,ci,si,zhi,chi,shi1",
+    "title": "zi,ci,si,zhi,chi,shi",
     "phoneme": "zi,ci,si,zhi,chi,shi",
     "ipa": "",
     "language": "zh",
@@ -865,10 +926,11 @@
     "videoPath": "zicisi,zhichishi1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "604.3 KB",
-    "id": 62
+    "id": 62,
+    "repetition": 1
   },
   {
-    "title": "zi,ci,si,zhi,chi,shi2",
+    "title": "zi,ci,si,zhi,chi,shi",
     "phoneme": "zi,ci,si,zhi,chi,shi",
     "ipa": "",
     "language": "zh",
@@ -879,10 +941,11 @@
     "videoPath": "zicisi,zhichishi2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "431.6 KB",
-    "id": 63
+    "id": 63,
+    "repetition": 2
   },
   {
-    "title": "zi1",
+    "title": "zi",
     "phoneme": "zi",
     "ipa": "",
     "language": "zh",
@@ -893,10 +956,11 @@
     "videoPath": "zi1.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "208.2 KB",
-    "id": 64
+    "id": 64,
+    "repetition": 1
   },
   {
-    "title": "zi2",
+    "title": "zi",
     "phoneme": "zi",
     "ipa": "",
     "language": "zh",
@@ -907,10 +971,11 @@
     "videoPath": "zi2.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "417.3 KB",
-    "id": 65
+    "id": 65,
+    "repetition": 2
   },
   {
-    "title": "zi3",
+    "title": "zi",
     "phoneme": "zi",
     "ipa": "",
     "language": "zh",
@@ -921,6 +986,7 @@
     "videoPath": "zi3.mp4",
     "createdAt": "2026-05-12T12:00:00.000Z",
     "fileSize": "413.3 KB",
-    "id": 66
+    "id": 66,
+    "repetition": 3
   }
 ]

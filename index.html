@@ -38,6 +38,7 @@
 <main class="main">
   <div id="table-view" class="table-container"><table class="data-table"><thead><tr>
     <th data-i18n="thNo">#</th><th data-i18n="thTitle">タイトル</th>
+    <th data-i18n="thRep">回</th>
     <th data-i18n="thLang">言語</th><th data-i18n="thSpeaker">発話者</th><th data-i18n="thDate">日付</th>
     <th data-i18n="thPlay">再生</th><th class="admin-only" style="display:none" data-i18n="thActions">操作</th>
   </tr></thead><tbody id="table-body"></tbody></table></div>
@@ -49,6 +50,7 @@
   <input type="hidden" id="form-edit-id">
   <div class="form-row"><label data-i18n="fTitle">タイトル *</label><input type="text" id="form-title" class="text-input" data-i18n-placeholder="fTitlePH"></div>
   <div class="form-row"><label data-i18n="fPhoneme">音素 *</label><input type="text" id="form-phoneme" class="text-input" data-i18n-placeholder="fPhonemePH"></div>
+  <div class="form-row"><label>回数</label><input type="number" id="form-rep" class="text-input" value="1" min="1" max="99" style="width:80px"></div>
   <div class="form-row"><label data-i18n="fLang">言語</label>
     <select id="form-language" class="text-input"><option value="ja" data-i18n="lang_ja">日本語</option><option value="zh" data-i18n="lang_zh">中国語</option><option value="en" data-i18n="lang_en">英語</option><option value="ko" data-i18n="lang_ko">韓国語</option></select></div>
   <div class="form-row"><label data-i18n="fSpeaker">発話者</label><input type="text" id="form-speaker" class="text-input" value="CF1"></div>
@@ -92,7 +94,7 @@ const I18N = {
     title:'超音波データのコーパス — Ultrasound Tongue Corpus', logo:'🔬 超音波データのコーパス',
     exportBtn:'📥 导出', importBtn:'📤 导入', adminBtn:'🔒 管理', tableView:'📋 表格', cardView:'🃏 卡片',
     searchPH:'🔍 検索... 音素 / 発話者 / タイトル',
-    thNo:'#', thTitle:'タイトル', thPhoneme:'音素', thLang:'言語', thSpeaker:'発話者', thDate:'日付', thPlay:'再生', thActions:'操作',
+    thNo:'#', thTitle:'タイトル', thRep:'回', thLang:'言語', thSpeaker:'発話者', thDate:'日付', thPlay:'再生', thActions:'操作',
     addVideo:'動画を追加', editVideo:'動画を編集',
     fTitle:'タイトル *', fTitlePH:'例：/a/ 日本語母音', fPhoneme:'音素 *', fPhonemePH:'例：a, i, u, e, o',
     fLang:'言語', fSpeaker:'発話者', fDate:'日付', fFile:'動画ファイル', fURL:'または動画URL', fNotes:'備考',
@@ -108,7 +110,7 @@ const I18N = {
     title:'超声数据语料库 — Ultrasound Tongue Corpus', logo:'🔬 超声数据语料库',
     exportBtn:'📥 导出', importBtn:'📤 导入', adminBtn:'🔒 管理', tableView:'📋 表格', cardView:'🃏 卡片',
     searchPH:'🔍 搜索... 音素 / 发音人 / 标题',
-    thNo:'#', thTitle:'标题', thPhoneme:'音素', thLang:'语言', thSpeaker:'发音人', thDate:'日期', thPlay:'播放', thActions:'操作',
+    thNo:'#', thTitle:'标题', thRep:'次', thLang:'语言', thSpeaker:'发音人', thDate:'日期', thPlay:'播放', thActions:'操作',
     addVideo:'添加视频', editVideo:'编辑视频',
     fTitle:'标题 *', fTitlePH:'例：/a/ 日语元音', fPhoneme:'音素 *', fPhonemePH:'例：a, i, u, e, o',
     fLang:'语言', fSpeaker:'发音人', fDate:'日期', fFile:'视频文件', fURL:'或视频URL', fNotes:'备注',
@@ -124,7 +126,7 @@ const I18N = {
     title:'Ultrasound Data Corpus — Ultrasound Tongue Corpus', logo:'🔬 Ultrasound Data Corpus',
     exportBtn:'📥 Export', importBtn:'📤 Import', adminBtn:'🔒 Admin', tableView:'📋 Table', cardView:'🃏 Cards',
     searchPH:'🔍 Search... phoneme / speaker / title',
-    thNo:'#', thTitle:'Title', thPhoneme:'Phoneme', thLang:'Language', thSpeaker:'Speaker', thDate:'Date', thPlay:'Play', thActions:'Actions',
+    thNo:'#', thTitle:'Title', thRep:'Rep', thLang:'Language', thSpeaker:'Speaker', thDate:'Date', thPlay:'Play', thActions:'Actions',
     addVideo:'Add Video', editVideo:'Edit Video',
     fTitle:'Title *', fTitlePH:'e.g. /a/ Japanese vowel', fPhoneme:'Phoneme *', fPhonemePH:'e.g. a, i, u, e, o',
     fLang:'Language', fSpeaker:'Speaker', fDate:'Date', fFile:'Video File', fURL:'or Video URL', fNotes:'Notes',
@@ -249,6 +251,7 @@ function renderTable(videos) {
     const actions = isAdmin ? '<td><button class="edit-btn" onclick="editEntry('+v.id+')">✏️</button><button class="del-btn" onclick="deleteEntry('+v.id+')">🗑</button></td>' : '';
     return '<tr><td>'+(i+1)+'</td>'+
       '<td>'+esc(v.title||'')+(v._source==='local'?' <span style="color:#ff0;font-size:10px">'+t('local')+'</span>':'')+'</td>'+
+      '<td style="text-align:center">'+(v.repetition||1)+'</td>'+
       '<td>'+langLabel(v.language)+'</td><td>'+esc(v.speaker||'')+'</td>'+
       '<td>'+(v.date||'')+'</td>'+
       '<td>'+(hasVid?'<button class="play-btn" onclick="event.stopPropagation();playVideo('+v.id+')">▶</button>':'<span style="color:#888">-</span>')+'</td>'+
@@ -328,6 +331,7 @@ async function saveEntry() {
     language: document.getElementById('form-language').value,
     speaker: document.getElementById('form-speaker').value.trim(),
     date: document.getElementById('form-date').value,
+    repetition: parseInt(document.getElementById('form-rep').value) || 1,
     notes: document.getElementById('form-notes').value.trim(),
     createdAt: new Date().toISOString()
   };
@@ -353,6 +357,7 @@ function editEntry(id) {
   document.getElementById('form-language').value = v.language||'ja';
   document.getElementById('form-speaker').value = v.speaker||'';
   document.getElementById('form-date').value = v.date||'';
+  document.getElementById('form-rep').value = v.repetition||1;
   document.getElementById('form-notes').value = v.notes||'';
   document.getElementById('form-url').value = v.videoUrl||'';
   document.getElementById('form-heading').textContent = t('editVideo');
@@ -370,6 +375,7 @@ function cancelEdit() {
   document.getElementById('form-edit-id').value = '';
   ['form-title','form-phoneme','form-url','form-notes'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('form-file').value = '';
+  document.getElementById('form-rep').value = '1';
   document.getElementById('form-heading').textContent = t('addVideo');
 }
 
