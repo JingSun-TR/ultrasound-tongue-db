@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Video Extractor</title>
+<style>
+body{font-family:monospace;padding:20px;background:#111;color:#0f0}
+pre{background:#222;padding:15px;overflow:auto;max-height:400px}
+button{padding:12px 24px;margin:10px 5px;cursor:pointer;font-size:14px}
+.done{color:#ff0}
+</style></head><body>
+<h2>Ultrasound DB — Video Extractor</h2>
+<pre id="log">Opening IndexedDB...</pre>
+<button id="btn" onclick="extract()" style="display:none">Extract All Videos</button>
+<div id="links"></div>
+<script>
+let allVideos = [];
+const log = (msg) => { document.getElementById('log').textContent += '\n' + msg; };
+
+(async () => {
+  const req = indexedDB.open('ultrasound-tongue-db-v3', 2);
+  req.onsuccess = (e) => {
+    const db = e.target.result;
+    const store = db.transaction('videos','readonly').objectStore('videos');
+    const getAll = store.getAll();
+    getAll.onsuccess = () => {
+      allVideos = getAll.result;
+      let hasBlobs = 0;
+      for (const v of allVideos) {
+        if (v.videoData && v.videoData instanceof Blob) hasBlobs++;
+      }
+      log('Found ' + allVideos.length + ' entries, ' + hasBlobs + ' with video blobs');
+      if (hasBlobs > 0) {
+        document.getElementById('btn').style.display = 'inline-block';
+      } else {
+        log('No video blobs found. Videos already stored as files?');
+      }
+    };
+  };
+  req.onerror = () => { log('ERROR: ' + req.error); };
+})();
+
+async function extract() {
+  const btn = document.getElementById('btn');
+  btn.disabled = true;
+  log('\n--- Extracting ---');
+  
+  const exportData = [];
+  const linksDiv = document.getElementById('links');
+  
+  for (let i = 0; i < allVideos.length; i++) {
+    const v = allVideos[i];
+    const { videoData, ...meta } = v;
+    
+    // Generate filename
+    const safe = (v.title || 'video').replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]/g, '_').substring(0, 40);
+    const ext = (v.videoData && v.videoData.type === 'video/webm') ? 'webm' : 'mp4';
+    const filename = safe + '_' + (v.date || 'nodate') + '.' + ext;
+    
+    if (videoData && videoData instanceof Blob) {
+      // Create download for video file
+      const blob = new Blob([videoData], {type: videoData.type || 'video/mp4'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.textContent = 'Download: ' + filename + ' (' + (blob.size/1024).toFixed(1) + ' KB)';
+      a.style.display = 'block';
+      a.style.color = '#0ff';
+      a.style.margin = '4px 0';
+      linksDiv.appendChild(a);
+      a.click();  // Auto-download
+      
+      meta.videoUrl = 'videos/' + filename;
+      meta.videoPath = filename;
+      log('  [' + (i+1) + '/' + allVideos.length + '] ' + filename + ' (' + (blob.size/1024).toFixed(1) + ' KB)');
+      
+      // Small delay between downloads
+      await new Promise(r => setTimeout(r, 300));
+    } else {
+      meta.videoUrl = v.videoUrl || '';
+      meta.videoPath = v.videoPath || '';
+      log('  [' + (i+1) + '/' + allVideos.length + '] NO BLOB: ' + (v.title || 'untitled'));
+    }
+    
+    exportData.push(meta);
+  }
+  
+  // Download the updated JSON
+  const json = JSON.stringify(exportData, null, 2);
+  const jsonBlob = new Blob([json], {type:'application/json'});
+  const jsonUrl = URL.createObjectURL(jsonBlob);
+  const a2 = document.createElement('a');
+  a2.href = jsonUrl;
+  a2.download = 'videos.json';
+  a2.textContent = 'DOWNLOAD: videos.json (updated metadata)';
+  a2.style.color = '#ff0';
+  a2.style.fontWeight = 'bold';
+  linksDiv.appendChild(a2);
+  
+  setTimeout(() => a2.click(), 500);
+  
+  log('\nDONE! ' + exportData.length + ' entries processed.');
+  log('Save all downloaded files to the videos/ folder in the repo.');
+  log('Replace data/videos.json with the downloaded videos.json.');
+  btn.textContent = 'Done!';
+}
+</script>
+</body></html>
