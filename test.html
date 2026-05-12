@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Test Play</title>
+<style>
+body{font-family:system-ui;padding:20px;background:#111;color:#fff}
+video{max-width:400px;margin:10px;border:2px solid #0f0;border-radius:8px}
+.row{display:flex;align-items:center;gap:10px;margin:5px 0;padding:8px;background:#222;border-radius:6px}
+button{padding:8px 16px;cursor:pointer;background:#0a0;color:#fff;border:none;border-radius:4px}
+.error{color:red}
+</style></head><body>
+<h1>Direct Video Test</h1>
+<div id="videos"></div>
+<div id="status" style="margin-top:20px;color:#0f0"></div>
+
+<script>
+const DATA_URL = 'data/videos.json';
+
+async function init() {
+  const status = document.getElementById('status');
+  status.textContent = 'Loading data...';
+  
+  try {
+    const resp = await fetch(DATA_URL);
+    const data = await resp.json();
+    status.textContent = `Loaded ${data.length} entries`;
+    
+    const container = document.getElementById('videos');
+    
+    // Show first 10 videos directly
+    for (let i = 0; i < Math.min(10, data.length); i++) {
+      const v = data[i];
+      const row = document.createElement('div');
+      row.className = 'row';
+      
+      const info = document.createElement('span');
+      info.textContent = `${v.id}. ${v.title} (${v.phoneme}) [${v.videoUrl}]`;
+      info.style.flex = '1';
+      
+      const btn = document.createElement('button');
+      btn.textContent = 'Play';
+      btn.onclick = function() {
+        const video = document.createElement('video');
+        video.src = v.videoUrl;
+        video.controls = true;
+        video.autoplay = true;
+        video.style.width = '100%';
+        video.onerror = function() {
+          status.innerHTML += `<br><span class="error">ERROR: ${v.videoUrl} failed to load</span>`;
+        };
+        video.onloadeddata = function() {
+          status.innerHTML += `<br>OK: ${v.videoUrl} loaded`;
+        };
+        // Replace row with video
+        row.innerHTML = '';
+        row.appendChild(video);
+      };
+      
+      row.appendChild(info);
+      row.appendChild(btn);
+      container.appendChild(row);
+    }
+  } catch(e) {
+    status.textContent = 'ERROR: ' + e.message;
+  }
+}
+
+init();
+</script>
+</body></html>
