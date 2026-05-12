@@ -3,172 +3,209 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="pageTitle">超音波舌位動画データベース — Ultrasound Tongue DB</title>
-  <meta name="description" content="超音波舌位画像データベース。音素・発話者・言語別に検索・閲覧可能。">
+  <title>超音波舌位動画データベース — Ultrasound Tongue DB</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
 </head>
 <body>
 
-<!-- ====== HEADER ====== -->
 <header class="header">
   <div class="header-inner">
     <div class="header-left">
-      <h1 class="logo">🔬 <span data-i18n="appTitle">超音波舌位DB</span></h1>
+      <h1 class="logo">🔬 超音波舌位DB</h1>
       <span class="badge-count" id="header-count">0件</span>
     </div>
     <div class="header-right">
-      <!-- Language Switcher -->
       <div class="lang-switcher">
-        <button class="lang-btn active" data-lang="ja" onclick="switchLang('ja')" title="日本語">🇯🇵 日</button>
-        <button class="lang-btn" data-lang="zh" onclick="switchLang('zh')" title="中文">🇨🇳 中</button>
-        <button class="lang-btn" data-lang="en" onclick="switchLang('en')" title="English">🇬🇧 EN</button>
+        <button class="lang-btn active" data-lang="ja" onclick="switchLang('ja')">🇯🇵 日</button>
+        <button class="lang-btn" data-lang="zh" onclick="switchLang('zh')">🇨🇳 中</button>
+        <button class="lang-btn" data-lang="en" onclick="switchLang('en')">🇬🇧 EN</button>
       </div>
-      <button class="btn btn-icon" onclick="exportData()" title="JSONエクスポート">📥 <span data-i18n="exportBtn">导出</span></button>
-      <button class="btn btn-icon" onclick="document.getElementById('import-file').click()" title="JSONインポート">📤 <span data-i18n="importBtn">导入</span></button>
-      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
-      <button class="btn btn-icon" id="admin-btn" onclick="toggleAdmin()" title="管理者モード">🔒 <span data-i18n="adminBtn">管理</span></button>
-      <button class="btn btn-icon" onclick="toggleView()" id="view-toggle" title="表示切替">📋 <span data-i18n="tableView">表格</span></button>
+      <button class="btn btn-icon" onclick="toggleView()" id="view-toggle">📋 表格</button>
     </div>
   </div>
 </header>
 
-<!-- ====== SEARCH BAR ====== -->
 <div class="search-bar">
   <div class="search-inner">
-    <input type="text" id="search-input" class="search-input" data-i18n-placeholder="searchPlaceholder" placeholder="🔍 検索... 音素 / 発話者 / タイトル / IPA / 備考" oninput="applyFilters()">
+    <input type="text" id="search-input" class="search-input" placeholder="🔍 検索... 音素 / 発話者 / タイトル / IPA" oninput="applyFilters()">
     <div class="filter-chips" id="active-filters"></div>
   </div>
 </div>
 
-<!-- ====== MAIN CONTENT ====== -->
 <main class="main">
-
-  <!-- TABLE VIEW -->
   <div id="table-view" class="table-container">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th class="col-no">No.</th>
-          <th class="col-title" onclick="sortBy('title')"><span data-i18n="colTitle">タイトル</span> <span class="sort-arrow"></span></th>
-          <th class="col-phoneme" onclick="sortBy('phoneme')"><span data-i18n="colPhoneme">音素</span> <span class="sort-arrow"></span></th>
-          <th class="col-ipa">IPA</th>
-          <th class="col-lang" onclick="sortBy('language')"><span data-i18n="colLang">言語</span> <span class="sort-arrow"></span></th>
-          <th class="col-speaker" onclick="sortBy('speaker')"><span data-i18n="colSpeaker">発話者</span> <span class="sort-arrow"></span></th>
-          <th class="col-date" onclick="sortBy('date')"><span data-i18n="colDate">収録日</span> <span class="sort-arrow"></span></th>
-          <th class="col-duration"><span data-i18n="colDuration">時間</span></th>
-          <th class="col-play"><span data-i18n="colPlay">再生</span></th>
-          <th class="col-size"><span data-i18n="colSize">サイズ</span></th>
-          <th class="col-actions admin-only" style="display:none;"><span data-i18n="colActions">操作</span></th>
-        </tr>
-      </thead>
-      <tbody id="table-body">
-        <tr class="empty-row"><td colspan="11" data-i18n="noData">データがありません。「管理」から動画を追加してください。</td></tr>
-      </tbody>
+    <table>
+      <thead><tr>
+        <th class="col-no">#</th>
+        <th class="col-title">タイトル</th>
+        <th class="col-phoneme">音素</th>
+        <th class="col-lang">言語</th>
+        <th class="col-speaker">発話者</th>
+        <th class="col-date">収録日</th>
+        <th class="col-play">再生</th>
+      </tr></thead>
+      <tbody id="table-body"></tbody>
     </table>
   </div>
-
-  <!-- CARD VIEW -->
-  <div id="card-view" class="card-grid" style="display:none;"></div>
-
+  <div id="card-view" class="card-grid" style="display:none"></div>
 </main>
 
-<!-- ====== ADMIN PANEL ====== -->
-<div id="admin-panel" class="admin-panel" style="display:none;">
-  <div class="admin-header">
-    <h2>🔧 <span data-i18n="adminPanel">管理パネル</span></h2>
-    <div class="admin-header-right">
-      <span class="storage-info" id="storage-info"></span>
-      <button class="btn btn-sm" onclick="toggleAdmin()"><span data-i18n="closePanel">閉じる</span></button>
-    </div>
-  </div>
-
-  <!-- Add/Edit Form -->
-  <div class="admin-form" id="admin-form">
-    <h3 id="form-heading">➕ <span data-i18n="addVideo">動画を追加</span></h3>
-    <div class="form-grid">
-      <div class="form-group">
-        <label><span data-i18n="fieldTitle">タイトル</span> *</label>
-        <input type="text" id="form-title-input" class="input" data-i18n-placeholder="titlePlaceholder" placeholder="例：/a/ 日本語母音 話者A">
-      </div>
-      <div class="form-group">
-        <label><span data-i18n="fieldPhoneme">音素（カンマ区切り）</span> *</label>
-        <input type="text" id="form-phoneme" class="input" placeholder="例：a, i, ɯ, e, o">
-      </div>
-      <div class="form-group">
-        <label>IPA</label>
-        <input type="text" id="form-ipa" class="input" placeholder="例：/a/, /i/, /ɯ/">
-      </div>
-      <div class="form-group">
-        <label><span data-i18n="fieldLang">言語</span></label>
-        <select id="form-language" class="input">
-          <option value="ja">日本語</option>
-          <option value="zh">中国語</option>
-          <option value="en">英語</option>
-          <option value="ko">韓国語</option>
-          <option value="other">その他</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label><span data-i18n="fieldSpeaker">発話者</span></label>
-        <input type="text" id="form-speaker" class="input" placeholder="例：話者A（女性・20代）">
-      </div>
-      <div class="form-group">
-        <label><span data-i18n="fieldDate">収録日</span></label>
-        <input type="date" id="form-date" class="input">
-      </div>
-      <div class="form-group full-width">
-        <label><span data-i18n="fieldVideo">動画ファイル</span></label>
-        <div class="file-area">
-          <input type="file" id="form-file" class="file-input-hidden" onchange="onFileSelected()">
-          <label for="form-file" class="file-drop-zone" id="file-drop-zone">
-            <span id="file-name" data-i18n="fileDropHint">クリックして動画を選択（またはドラッグ＆ドロップ）</span>
-          </label>
-        </div>
-        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;"><span data-i18n="orUrl">またはURL / パス</span></p>
-        <input type="text" id="form-url" class="input" placeholder="https://... または /path/to/video.mp4">
-      </div>
-      <div class="form-group full-width">
-        <label><span data-i18n="fieldNotes">備考</span></label>
-        <textarea id="form-notes" class="input" rows="2" data-i18n-placeholder="notesPlaceholder" placeholder="超音波プローブ位置、フレームレート、実験条件など"></textarea>
-      </div>
-    </div>
-    <div class="form-actions">
-      <input type="hidden" id="form-edit-id" value="">
-      <button class="btn btn-primary" onclick="saveEntry()">💾 <span data-i18n="saveBtn">保存</span></button>
-      <button class="btn" onclick="cancelEdit()"><span data-i18n="cancelBtn">キャンセル</span></button>
-    </div>
-  </div>
-</div>
-
-<!-- ====== VIDEO PLAYER MODAL ====== -->
-<div class="modal" id="player-modal" style="display:none;">
+<div class="modal" id="player-modal" style="display:none">
   <div class="modal-backdrop" onclick="closePlayer()"></div>
   <div class="modal-content">
     <button class="modal-close" onclick="closePlayer()">✕</button>
-    <video id="player-video" controls style="width:100%;max-height:65vh;border-radius:8px;background:#000;"></video>
+    <video id="player-video" controls style="width:100%;max-height:65vh;border-radius:8px;background:#000"></video>
     <div id="player-info" class="player-info"></div>
   </div>
 </div>
 
-<!-- ====== PASSWORD MODAL ====== -->
-<div class="modal" id="password-modal" style="display:none;">
-  <div class="modal-backdrop"></div>
-  <div class="modal-content modal-sm">
-    <h3 style="margin-bottom:16px;">🔐 <span data-i18n="authTitle">管理者認証</span></h3>
-    <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;" data-i18n="authDesc">データベースを編集するにはパスワードを入力してください。</p>
-    <input type="password" id="admin-password" class="input" data-i18n-placeholder="authPlaceholder" placeholder="パスワード" style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')verifyAdmin()">
-    <div class="form-actions">
-      <button class="btn btn-primary" onclick="verifyAdmin()"><span data-i18n="authBtn">認証</span></button>
-      <button class="btn" onclick="closePasswordModal()"><span data-i18n="cancelBtn">キャンセル</span></button>
-    </div>
-    <p id="password-error" style="color:#ef4444;font-size:0.8rem;margin-top:8px;display:none;" data-i18n="wrongPassword">パスワードが違います。</p>
-  </div>
-</div>
+<script>
+// ====== State ======
+let allVideos = [];
+let currentView = 'table';
 
-<script src="i18n.js"></script>
-<script src="app.js"></script>
+// ====== Load Data ======
+async function loadData() {
+  try {
+    const resp = await fetch('data/videos.json');
+    allVideos = await resp.json();
+    document.getElementById('header-count').textContent = allVideos.length + '件';
+    applyFilters();
+  } catch(e) {
+    document.getElementById('table-body').innerHTML =
+      '<tr><td colspan="7" style="text-align:center;padding:40px;color:#f66">データ読み込み失敗: ' + e.message + '</td></tr>';
+  }
+}
+
+// ====== Render ======
+function applyFilters() {
+  const q = (document.getElementById('search-input').value || '').toLowerCase().trim();
+  let filtered = allVideos;
+  if (q) {
+    const terms = q.split(/\s+/).filter(Boolean);
+    filtered = allVideos.filter(v => {
+      const s = [v.title, v.phoneme, v.ipa, v.speaker, v.language, v.date]
+        .filter(Boolean).join(' ').toLowerCase();
+      return terms.every(t => s.includes(t));
+    });
+  }
+  // Sort by language then title
+  filtered.sort((a,b) => {
+    if (a.language !== b.language) return a.language === 'ja' ? -1 : 1;
+    return (a.title||'').localeCompare(b.title||'');
+  });
+
+  if (currentView === 'table') renderTable(filtered);
+  else renderCards(filtered);
+}
+
+function renderTable(videos) {
+  const tbody = document.getElementById('table-body');
+  if (!videos.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#888">データなし</td></tr>';
+    return;
+  }
+  tbody.innerHTML = videos.map((v, i) => {
+    const langLabel = {ja:'日本語',zh:'中国語',en:'英語',ko:'韓国語'}[v.language] || v.language;
+    const hasVideo = !!v.videoUrl;
+    return '<tr>' +
+      '<td>' + (i+1) + '</td>' +
+      '<td>' + esc(v.title||'') + '</td>' +
+      '<td>' + esc(v.phoneme||'') + '</td>' +
+      '<td>' + langLabel + '</td>' +
+      '<td>' + esc(v.speaker||'') + '</td>' +
+      '<td>' + (v.date||'') + '</td>' +
+      '<td>' + (hasVideo
+        ? '<button class="play-btn" onclick="event.stopPropagation();playVideo(' + v.id + ')">▶</button>'
+        : '<span style="color:#888;font-size:12px">-</span>') +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function renderCards(videos) {
+  const grid = document.getElementById('card-view');
+  if (!videos.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#888">データなし</div>';
+    return;
+  }
+  grid.innerHTML = videos.map(v => {
+    const langLabel = {ja:'日本語',zh:'中国語',en:'英語',ko:'韓国語'}[v.language] || v.language;
+    const hasVideo = !!v.videoUrl;
+    return '<div class="video-card"' + (hasVideo ? ' onclick="playVideo(' + v.id + ')"' : '') + '>' +
+      '<div class="video-thumb">' +
+        (hasVideo
+          ? '<video src="' + esc(v.videoUrl) + '#t=0.1" preload="metadata" muted style="width:100%;height:100%;object-fit:cover"></video>' +
+            '<span class="play-icon-overlay">▶</span>'
+          : '<span style="display:flex;align-items:center;justify-content:center;height:100%;color:#888">📹</span>') +
+      '</div>' +
+      '<div class="card-info">' +
+        '<div class="card-title">' + esc(v.title||'無題') + '</div>' +
+        '<div class="card-tags"><span class="phoneme-tag">' + esc(v.phoneme||'') + '</span></div>' +
+        '<div style="font-size:0.75rem;color:#888;margin-top:4px">' +
+          langLabel + ' · ' + esc(v.speaker||'') + ' · ' + (v.date||'') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ====== Play ======
+function playVideo(id) {
+  const numId = parseInt(id);
+  const video = allVideos.find(v => v.id === numId);
+  if (!video || !video.videoUrl) return;
+
+  const player = document.getElementById('player-video');
+  player.src = video.videoUrl;
+  player.style.display = '';
+
+  document.getElementById('player-info').innerHTML =
+    '<h3>' + esc(video.title||'') + '</h3>' +
+    '<div class="player-meta">' +
+      '<span class="phoneme-tag">🔤 ' + esc(video.phoneme) + '</span>' +
+      '<span class="phoneme-tag">🌐 ' + ({ja:'日本語',zh:'中国語'}[video.language]||video.language) + '</span>' +
+      '<span class="phoneme-tag">👤 ' + esc(video.speaker||'') + '</span>' +
+      '<span class="phoneme-tag">📅 ' + (video.date||'') + '</span>' +
+    '</div>';
+
+  document.getElementById('player-modal').style.display = 'flex';
+  player.play().catch(() => {});
+}
+
+function closePlayer() {
+  document.getElementById('player-modal').style.display = 'none';
+  const p = document.getElementById('player-video');
+  p.pause(); p.src = '';
+}
+
+// ====== View Toggle ======
+function toggleView() {
+  currentView = currentView === 'table' ? 'cards' : 'table';
+  document.getElementById('table-view').style.display = currentView === 'table' ? '' : 'none';
+  document.getElementById('card-view').style.display = currentView === 'cards' ? '' : 'none';
+  document.getElementById('view-toggle').textContent = currentView === 'table' ? '📋 表格' : '🃏 卡片';
+  applyFilters();
+}
+
+// ====== Language ======
+let currentLang = 'ja';
+function switchLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  applyFilters();
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ====== Init ======
+loadData();
+</script>
+
 </body>
 </html>
