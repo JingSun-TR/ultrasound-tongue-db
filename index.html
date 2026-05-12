@@ -1,132 +1,163 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>超声波舌位视频数据库 — Ultrasound Tongue DB</title>
-  <meta name="description" content="超声波舌位视频数据库。存储、分类、检索、播放超声波舌位影像。支持按音素、语言、发音人筛选。">
+  <title>超音波舌位動画データベース — Ultrasound Tongue DB</title>
+  <meta name="description" content="超音波舌位画像データベース。音素・発話者・言語別に検索・閲覧可能。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
 </head>
 <body>
-  <nav class="nav">
-    <div class="nav-inner">
-      <a href="/" class="nav-logo">🔬 超声波舌位数据库</a>
-      <div class="nav-actions">
-        <button class="btn btn-sm" onclick="document.getElementById('upload-section').scrollIntoView()">📤 上传视频</button>
-      </div>
-    </div>
-  </nav>
 
-  <main class="main">
-    <!-- Stats Bar -->
-    <div class="stats-bar">
-      <div class="stat"><span class="stat-num" id="total-videos">0</span> 视频</div>
-      <div class="stat"><span class="stat-num" id="total-phonemes">0</span> 音素</div>
-      <div class="stat"><span class="stat-num" id="total-speakers">0</span> 发音人</div>
+<!-- ====== HEADER ====== -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <h1 class="logo">🔬 超音波舌位DB</h1>
+      <span class="badge-count" id="header-count">0件</span>
     </div>
+    <div class="header-right">
+      <button class="btn btn-icon" onclick="exportData()" title="JSONエクスポート">📥 导出</button>
+      <button class="btn btn-icon" onclick="document.getElementById('import-file').click()" title="JSONインポート">📤 导入</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn btn-icon" id="admin-btn" onclick="toggleAdmin()" title="管理者モード">🔒 管理</button>
+      <button class="btn btn-icon" onclick="toggleView()" id="view-toggle" title="表示切替">📋 表格</button>
+    </div>
+  </div>
+</header>
 
-    <!-- Filters -->
-    <div class="filters">
-      <div class="filter-group">
-        <label>🔤 音素</label>
-        <select id="filter-phoneme"><option value="">全部</option></select>
+<!-- ====== SEARCH BAR ====== -->
+<div class="search-bar">
+  <div class="search-inner">
+    <input type="text" id="search-input" class="search-input" placeholder="🔍 検索... 音素 / 発話者 / タイトル / IPA / 備考" oninput="applyFilters()">
+    <div class="filter-chips" id="active-filters"></div>
+  </div>
+</div>
+
+<!-- ====== MAIN CONTENT ====== -->
+<main class="main">
+
+  <!-- TABLE VIEW -->
+  <div id="table-view" class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="col-no">No.</th>
+          <th class="col-title" onclick="sortBy('title')">タイトル <span class="sort-arrow"></span></th>
+          <th class="col-phoneme" onclick="sortBy('phoneme')">音素 <span class="sort-arrow"></span></th>
+          <th class="col-ipa">IPA</th>
+          <th class="col-lang" onclick="sortBy('language')">言語 <span class="sort-arrow"></span></th>
+          <th class="col-speaker" onclick="sortBy('speaker')">発話者 <span class="sort-arrow"></span></th>
+          <th class="col-date" onclick="sortBy('date')">収録日 <span class="sort-arrow"></span></th>
+          <th class="col-duration">時間</th>
+          <th class="col-play">再生</th>
+          <th class="col-actions admin-only" style="display:none;">操作</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr class="empty-row"><td colspan="10">データがありません。「管理」から動画を追加してください。</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CARD VIEW -->
+  <div id="card-view" class="card-grid" style="display:none;"></div>
+
+</main>
+
+<!-- ====== ADMIN PANEL ====== -->
+<div id="admin-panel" class="admin-panel" style="display:none;">
+  <div class="admin-header">
+    <h2>🔧 管理パネル</h2>
+    <button class="btn btn-sm" onclick="toggleAdmin()">閉じる</button>
+  </div>
+
+  <!-- Add/Edit Form -->
+  <div class="admin-form" id="admin-form">
+    <h3 id="form-title">➕ 動画を追加</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>タイトル *</label>
+        <input type="text" id="form-title" class="input" placeholder="例：/a/ 日本語母音 話者A">
       </div>
-      <div class="filter-group">
-        <label>🗣 语言</label>
-        <select id="filter-language">
-          <option value="">全部</option>
+      <div class="form-group">
+        <label>音素（カンマ区切り）*</label>
+        <input type="text" id="form-phoneme" class="input" placeholder="例：a, i, ɯ, e, o">
+      </div>
+      <div class="form-group">
+        <label>IPA表記</label>
+        <input type="text" id="form-ipa" class="input" placeholder="例：/a/, /i/, /ɯ/">
+      </div>
+      <div class="form-group">
+        <label>言語</label>
+        <select id="form-language" class="input">
           <option value="ja">日本語</option>
-          <option value="zh">中文</option>
-          <option value="en">English</option>
-          <option value="other">其他</option>
+          <option value="zh">中国語</option>
+          <option value="en">英語</option>
+          <option value="ko">韓国語</option>
+          <option value="other">その他</option>
         </select>
       </div>
-      <div class="filter-group">
-        <label>👤 发音人</label>
-        <select id="filter-speaker"><option value="">全部</option></select>
+      <div class="form-group">
+        <label>発話者</label>
+        <input type="text" id="form-speaker" class="input" placeholder="例：話者A（女性・20代）">
       </div>
-      <div class="filter-group">
-        <label>📅 日期</label>
-        <input type="date" id="filter-date">
+      <div class="form-group">
+        <label>収録日</label>
+        <input type="date" id="form-date" class="input">
       </div>
-    </div>
-
-    <!-- Video Grid -->
-    <div class="video-grid" id="video-grid">
-      <div class="empty-state">
-        <div class="empty-icon">📹</div>
-        <h3>暂无视频</h3>
-        <p>点击上方「上传视频」按钮添加超声波影像</p>
-      </div>
-    </div>
-
-    <!-- Upload Section -->
-    <section id="upload-section" class="upload-section">
-      <h2>📤 添加视频</h2>
-      <div class="upload-card">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>视频标题 *</label>
-            <input type="text" id="upload-title" class="input" placeholder="例：/a/ 日本語母音 発音者A">
-          </div>
-          <div class="form-group">
-            <label>音素 (IPA) *</label>
-            <input type="text" id="upload-phoneme" class="input" placeholder="例：a, i, ɯ, e, o">
-          </div>
-          <div class="form-group">
-            <label>语言</label>
-            <select id="upload-language" class="input">
-              <option value="ja">日本語</option>
-              <option value="zh">中文</option>
-              <option value="en">English</option>
-              <option value="other">其他</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>发音人</label>
-            <input type="text" id="upload-speaker" class="input" placeholder="例：Speaker A">
-          </div>
-          <div class="form-group">
-            <label>记录日期</label>
-            <input type="date" id="upload-date" class="input">
-          </div>
-          <div class="form-group">
-            <label>视频文件</label>
-            <div class="file-input-wrapper">
-              <input type="file" id="upload-file" accept="video/*" class="file-input">
-              <label for="upload-file" class="file-label">选择视频文件</label>
-            </div>
-            <p style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">或输入视频链接（YouTube / 本地路径）</p>
-            <input type="text" id="upload-url" class="input" placeholder="https://... 或 /path/to/video.mp4" style="margin-top:8px;">
-          </div>
-          <div class="form-group">
-            <label>备注</label>
-            <textarea id="upload-notes" class="input" rows="2" placeholder="探头位置、帧率、实验条件等"></textarea>
-          </div>
+      <div class="form-group full-width">
+        <label>動画ファイル</label>
+        <div class="file-area">
+          <input type="file" id="form-file" accept="video/*,.mp4,.avi,.mov,.webm" class="file-input-hidden">
+          <label for="form-file" class="file-drop-zone">
+            <span id="file-name">クリックして動画を選択（またはドラッグ＆ドロップ）</span>
+          </label>
         </div>
-        <button class="btn btn-primary" onclick="addVideo()">✅ 添加到数据库</button>
-        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;">视频数据保存在浏览器本地存储中（IndexedDB）</p>
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">またはURL</p>
+        <input type="text" id="form-url" class="input" placeholder="https://... または /path/to/video.mp4">
       </div>
-    </section>
-
-    <!-- Video Player Modal -->
-    <div class="modal" id="player-modal" style="display:none;">
-      <div class="modal-backdrop" onclick="closePlayer()"></div>
-      <div class="modal-content">
-        <button class="modal-close" onclick="closePlayer()">✕</button>
-        <video id="player-video" controls style="width:100%;max-height:70vh;border-radius:8px;"></video>
-        <div id="player-info" class="player-info"></div>
+      <div class="form-group full-width">
+        <label>備考</label>
+        <textarea id="form-notes" class="input" rows="2" placeholder="超音波プローブ位置、フレームレート、実験条件など"></textarea>
       </div>
     </div>
-  </main>
+    <div class="form-actions">
+      <input type="hidden" id="form-edit-id" value="">
+      <button class="btn btn-primary" onclick="saveEntry()">💾 保存</button>
+      <button class="btn" onclick="cancelEdit()">キャンセル</button>
+    </div>
+  </div>
+</div>
 
-  <footer class="footer">
-    <p>超声波舌位视频数据库 · 语音学研究工具</p>
-    <p><a href="https://github.com/JingSun-TR/ultrasound-tongue-db">GitHub</a></p>
-  </footer>
+<!-- ====== VIDEO PLAYER MODAL ====== -->
+<div class="modal" id="player-modal" style="display:none;">
+  <div class="modal-backdrop" onclick="closePlayer()"></div>
+  <div class="modal-content">
+    <button class="modal-close" onclick="closePlayer()">✕</button>
+    <video id="player-video" controls style="width:100%;max-height:65vh;border-radius:8px;background:#000;"></video>
+    <div id="player-info" class="player-info"></div>
+  </div>
+</div>
 
-  <script src="app.js"></script>
+<!-- ====== PASSWORD MODAL ====== -->
+<div class="modal" id="password-modal" style="display:none;">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content modal-sm">
+    <h3 style="margin-bottom:16px;">🔐 管理者認証</h3>
+    <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;">データベースを編集するにはパスワードを入力してください。</p>
+    <input type="password" id="admin-password" class="input" placeholder="パスワード" style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')verifyAdmin()">
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="verifyAdmin()">認証</button>
+      <button class="btn" onclick="closePasswordModal()">キャンセル</button>
+    </div>
+    <p id="password-error" style="color:#ef4444;font-size:0.8rem;margin-top:8px;display:none;">パスワードが違います。</p>
+  </div>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
