@@ -1,1 +1,98 @@
-[]
+[
+  {
+    "title": "a1",
+    "phoneme": "a",
+    "ipa": "",
+    "language": "zh",
+    "speaker": "CF1",
+    "date": "2026-05-12",
+    "notes": "左は舌根、右は舌先",
+    "fileSize": "381.8 KB",
+    "createdAt": "2026-05-12T08:49:32.242Z",
+    "id": 1
+  },
+  {
+    "title": "a2",
+    "phoneme": "a",
+    "ipa": "",
+    "language": "zh",
+    "speaker": "CF1",
+    "date": "2026-05-12",
+    "notes": "",
+    "fileSize": "407.1 KB",
+    "createdAt": "2026-05-12T08:50:21.078Z",
+    "id": 2
+  },
+  {
+    "title": "a3",
+    "phoneme": "a",
+    "ipa": "",
+    "language": "ja",
+    "speaker": "CF1",
+    "date": "2026-05-12",
+    "notes": "",
+    "fileSize": "374.5 KB",
+    "createdAt": "2026-05-12T08:51:32.019Z",
+    "id": 3
+  },
+  {
+    "title": "あいうえお1",
+    "phoneme": "/a,i,u,e,o/",
+    "ipa": "",
+    "language": "ja",
+    "speaker": "CF1",
+    "date": "2026-05-12",
+    "notes": "",
+    "fileSize": "366.4 KB",
+    "createdAt": "2026-05-12T08:53:15.906Z",
+    "id": 4
+  },
+  {
+    "title": "a,wo,e,yi,wu,yu1",
+    "phoneme": "a,o,e,i,u,y",
+    "ipa": "",
+    "language": "zh",
+    "speaker": "CF1",
+    "date": "2026-05-12",
+    "notes": "",
+    "fileSize": "629.5 KB",
+    "createdAt": "2026-05-12T08:54:53.818Z",
+    "id": 5
+  },
+  {
+    "title": "a,wo,e,yi,wu,yu2",
+    "phoneme": "a,o,e,i,u,y",
+    "ipa": "",
+    "language": "zh",
+    "speaker": "CF1",
+    "date": "2026-05-12",
+    "notes": "",
+    "fileSize": "433.7 KB",
+    "createdAt": "2026-05-12T08:56:16.981Z",
+    "id": 6
+  },
+  {
+    "title": "chi1",
+    "phoneme": "chi",
+    "ipa": "",
+    "language": "zh",
+    "speaker": "CF1",
+    "date": "2026-05-12",
+    "notes": "",
+    "fileSize": "300.2 KB",
+    "createdAt": "2026-05-12T08:57:31.435Z",
+    "id": 7
+  },
+  {
+    "title": "chi2",
+    "phoneme": "chi",
+    "ipa": "",
+    "language": "ja",
+    "speaker": "CF1",
+    "date": "2026-05-12",
+    "notes": "",
+    "fileSize": "439.1 KB",
+    "createdAt": "2026-05-12T08:58:04.332Z",
+    "id": 8
+  }
+]
