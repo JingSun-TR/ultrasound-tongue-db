@@ -91,6 +91,19 @@
   </div>
 </div>
 
+<!-- Password Modal -->
+<div class="modal" id="pw-modal" style="display:none">
+  <div class="modal-backdrop" onclick="closePwModal()"></div>
+  <div class="modal-content modal-sm">
+    <h3>🔐 管理者認証</h3>
+    <p style="font-size:0.85rem;color:#888;margin:12px 0">パスワードを入力してください</p>
+    <input type="password" id="pw-input" class="text-input" style="margin-bottom:12px" onkeydown="if(event.key==='Enter')verifyPw()">
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="verifyPw()">認証</button>
+      <button class="btn" onclick="closePwModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
 <!-- Player Modal -->
 <div class="modal" id="player-modal" style="display:none">
   <div class="modal-backdrop" onclick="closePlayer()"></div>
@@ -297,9 +310,25 @@ function toggleAdmin() {
   applyFilters();
 }
 function showPasswordPrompt() {
-  const pw = prompt('パスワードを入力してください');
-  if (pw === ADMIN_PW) { isAdmin = true; document.getElementById('admin-btn').textContent = '🔓 管理中'; document.getElementById('admin-panel').style.display = ''; cancelEdit(); }
-  else if (pw) alert('パスワードが違います');
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+function verifyPw() {
+  const pw = document.getElementById('pw-input').value;
+  if (pw === ADMIN_PW) {
+    isAdmin = true;
+    document.getElementById('admin-btn').textContent = '🔓 管理中';
+    document.getElementById('admin-panel').style.display = '';
+    cancelEdit();
+    applyFilters();
+    closePwModal();
+  } else {
+    alert('パスワードが違います');
+  }
+}
+function closePwModal() {
+  document.getElementById('pw-modal').style.display = 'none';
 }
 async function saveEntry() {
   const title = document.getElementById('form-title').value.trim();
