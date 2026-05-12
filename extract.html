@@ -3,11 +3,12 @@
 <style>
 body{font-family:monospace;padding:20px;background:#111;color:#0f0}
 pre{background:#222;padding:15px;overflow:auto;max-height:500px}
-a{color:#0ff;display:block;margin:4px 0}
+a{color:#ff0;font-weight:bold;font-size:16px}
 </style></head><body>
-<h2>Ultrasound DB — Auto Video Extractor</h2>
-<pre id="log">Opening IndexedDB...</pre>
+<h2>Ultrasound DB — Auto Video Extractor (ZIP)</h2>
+<pre id="log">Loading JSZip + opening IndexedDB...</pre>
 <div id="links"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 const log = (msg) => { document.getElementById('log').textContent += '\n' + msg; };
 
@@ -23,8 +24,9 @@ const log = (msg) => { document.getElementById('log').textContent += '\n' + msg;
         const allVideos = getAll.result;
         log('Found ' + allVideos.length + ' entries');
         
+        const zip = new JSZip();
+        const videosFolder = zip.folder('videos');
         const exportData = [];
-        const linksDiv = document.getElementById('links');
         
         for (let i = 0; i < allVideos.length; i++) {
           const v = allVideos[i];
@@ -37,43 +39,40 @@ const log = (msg) => { document.getElementById('log').textContent += '\n' + msg;
           if (videoData && videoData instanceof Blob && videoData.size > 0) {
             meta.videoUrl = 'videos/' + filename;
             meta.videoPath = filename;
-            
-            // Trigger download
-            const blob = new Blob([videoData], {type: videoData.type || 'video/mp4'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            linksDiv.appendChild(a);
-            a.click();
-            
-            log('[' + (i+1) + '/' + allVideos.length + '] Saved: ' + filename + ' (' + (blob.size/1024).toFixed(1) + ' KB)');
-            await new Promise(r => setTimeout(r, 500));
+            videosFolder.file(filename, videoData);
+            log('[' + (i+1) + '/' + allVideos.length + '] ' + filename + ' (' + (videoData.size/1024).toFixed(1) + ' KB)');
           } else {
             meta.videoUrl = v.videoUrl || '';
             meta.videoPath = v.videoPath || '';
-            log('[' + (i+1) + '/' + allVideos.length + '] No blob: ' + (v.title || 'untitled') + ' (using existing path)');
+            log('[' + (i+1) + '/' + allVideos.length + '] No blob: ' + (v.title || 'untitled'));
           }
           
           exportData.push(meta);
         }
         
-        // Download updated JSON last
+        // Add updated JSON to ZIP
         const json = JSON.stringify(exportData, null, 2);
-        const jsonBlob = new Blob([json], {type:'application/json'});
-        const jsonUrl = URL.createObjectURL(jsonBlob);
-        const a2 = document.createElement('a');
-        a2.href = jsonUrl;
-        a2.download = 'videos.json';
-        a2.style.color = '#ff0';
-        a2.style.fontWeight = 'bold';
-        a2.textContent = '>>> DOWNLOAD: videos.json (updated metadata) <<<';
-        linksDiv.insertBefore(a2, linksDiv.firstChild);
-        setTimeout(() => a2.click(), 1000);
+        zip.file('videos.json', json);
         
-        log('\nDONE! ' + exportData.length + ' entries processed.');
-        log('Move all .mp4/.webm files to videos/ folder.');
-        log('Replace data/videos.json with the downloaded one.');
+        log('\nGenerating ZIP...');
+        const zipBlob = await zip.generateAsync({type: 'blob'}, (meta) => {
+          if (meta.percent % 20 === 0) log('  ' + meta.percent.toFixed(0) + '%');
+        });
+        
+        log('ZIP size: ' + (zipBlob.size/1024/1024).toFixed(1) + ' MB');
+        log('\nDOWNLOADING...');
+        
+        // Trigger single download
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ultrasound-videos.zip';
+        a.textContent = '>>> CLICK HERE TO DOWNLOAD ZIP <<<';
+        a.style.cssText = 'color:#ff0;font-weight:bold;font-size:18px;display:block;margin:10px 0';
+        document.getElementById('links').appendChild(a);
+        a.click();
+        
+        log('DONE! Unzip and place videos/ folder + videos.json into the repo.');
       };
     };
     req.onerror = () => { log('ERROR: ' + req.error); };
