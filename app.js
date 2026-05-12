@@ -52,9 +52,33 @@ async function getAllVideos() {
 
 async function getVideo(id) {
   return new Promise((resolve, reject) => {
-    const request = dbTx('videos').get(id);
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = (e) => reject(e.target.error);
+    // Try by primary key first
+    const request1 = dbTx('videos').get(id);
+    request1.onsuccess = () => {
+      if (request1.result) {
+        resolve(request1.result);
+      } else {
+        // Fallback: search by id field (for repo-synced entries)
+        const store = dbTx('videos');
+        const request2 = store.openCursor();
+        request2.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) {
+            if (cursor.value.id === id) {
+              const result = cursor.value;
+              result._dbKey = cursor.primaryKey;  // store real key for updates/deletes
+              resolve(result);
+              return;
+            }
+            cursor.continue();
+          } else {
+            resolve(null);
+          }
+        };
+        request2.onerror = (e) => reject(e.target.error);
+      }
+    };
+    request1.onerror = (e) => reject(e.target.error);
   });
 }
 
@@ -70,8 +94,9 @@ async function updateVideo(id, updates) {
   const video = await getVideo(id);
   if (!video) throw new Error('Video not found');
   Object.assign(video, updates);
+  const key = video._dbKey || id;
   return new Promise((resolve, reject) => {
-    const request = dbTx('videos', 'readwrite').put(video);
+    const request = dbTx('videos', 'readwrite').put(video, key);
     request.onsuccess = () => resolve();
     request.onerror = (e) => reject(e.target.error);
   });
@@ -89,8 +114,9 @@ async function deleteVideo(id) {
       });
     } catch (e) { /* best effort */ }
   }
+  const key = video ? (video._dbKey || id) : id;
   return new Promise((resolve, reject) => {
-    const request = dbTx('videos', 'readwrite').delete(id);
+    const request = dbTx('videos', 'readwrite').delete(key);
     request.onsuccess = () => resolve();
     request.onerror = (e) => reject(e.target.error);
   });
@@ -541,7 +567,8 @@ if (dropZone) {
 
 // ====== Play Video ======
 async function playVideo(id) {
-  const video = await getVideo(id);
+  // Search allVideos by id field (not IndexedDB key)
+  const video = allVideos.find(v => v.id === id);
   if (!video) return;
 
   const modal = document.getElementById('player-modal');
