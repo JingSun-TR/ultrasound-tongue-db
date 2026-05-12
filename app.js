@@ -568,40 +568,39 @@ if (dropZone) {
 
 // ====== Play Video ======
 async function playVideo(id) {
-  // Search allVideos by id field (parseInt because onclick passes string)
   const numId = parseInt(id);
   const video = allVideos.find(v => v.id === numId);
-  if (!video) { console.warn('Video not found by id:', id, 'type:', typeof id); return; }
+  if (!video) {
+    alert('Video not found: id=' + id + ' numId=' + numId + ' total=' + allVideos.length);
+    return;
+  }
 
   const modal = document.getElementById('player-modal');
   const player = document.getElementById('player-video');
 
   // Determine video source
   let src = '';
-  let noVideo = false;
-  if (serverAvailable && video.videoPath) {
-    src = VIDEO_SERVER_URL + VIDEO_SERVER_DIR + encodeURIComponent(video.videoPath);
-  } else if (video.videoUrl) {
+  if (video.videoUrl) {
     src = video.videoUrl;
+  } else if (serverAvailable && video.videoPath) {
+    src = VIDEO_SERVER_URL + VIDEO_SERVER_DIR + encodeURIComponent(video.videoPath);
   } else if (video.videoData) {
     src = video.videoData;
-  } else {
-    noVideo = true;
   }
 
-  if (noVideo) {
+  if (!src) {
     player.removeAttribute('src');
     player.style.display = 'none';
     document.getElementById('player-info').innerHTML =
       '<h3>' + escHtml(video.title || t('untitled')) + '</h3>' +
-      '<p style=\"color:#ff6b6b;margin-top:20px;font-size:16px\">⚠️ 视频文件未上传</p>' +
-      '<p style=\"color:#888;font-size:14px\">请通过管理面板重新上传视频文件。<br>支持拖放 MP4/WebM 文件。</p>';
-    modal.classList.add('show');
+      '<p style="color:#ff6b6b;margin-top:20px;font-size:16px">No video source available</p>';
+    modal.style.display = 'flex';
     return;
   }
 
   player.style.display = '';
   player.src = src;
+  player.load();
 
   document.getElementById('player-info').innerHTML =
     '<h3>' + escHtml(video.title || t('untitled')) + '</h3>' +
