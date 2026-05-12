@@ -195,7 +195,7 @@ async function syncFromRepo() {
       if (existingEntry) {
         // Update existing entry if repo has videoUrl and local doesn't
         if (item.videoUrl && !existingEntry.videoUrl) {
-          await updateVideo(existingEntry._dbKey || existingEntry.id || existingEntry.id, {
+          await updateVideo(existingEntry.id, {
             videoUrl: item.videoUrl,
             videoPath: item.videoPath,
             fileSize: item.fileSize
@@ -580,10 +580,7 @@ if (dropZone) {
 async function playVideo(id) {
   const numId = parseInt(id);
   const video = allVideos.find(v => v.id === numId);
-  if (!video) {
-    alert('Video not found: id=' + id + ' numId=' + numId + ' total=' + allVideos.length);
-    return;
-  }
+  if (!video) return;
 
   const modal = document.getElementById('player-modal');
   const player = document.getElementById('player-video');
