@@ -30,7 +30,7 @@ This starts a local HTTP server on port 8765. The web app auto-detects it and sw
 Without the server, videos are stored in browser IndexedDB (subject to browser quota).
 
 ### 3. Admin mode
-Click 🔒 管理 and enter password: `sunlab2024`
+Click 🔒 管理 and enter the admin password.
 
 ## Project Structure
 ```

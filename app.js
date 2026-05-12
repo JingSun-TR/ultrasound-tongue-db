@@ -6,7 +6,7 @@
 //   4. Data persistence: IndexedDB metadata survives all code updates
 
 // ====== CONFIG ======
-const ADMIN_PASSWORD = 'sunlab2024';
+const ADMIN_PASSWORD = ''; // removed — using hash in index.html
 const VIDEO_SERVER_URL = 'http://localhost:8765';
 const VIDEO_SERVER_DIR = '/videos/';
 let isAdmin = false;

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>超音波舌位動画DB — Ultrasound Tongue DB</title>
+  <title>超音波データのコーパス — Ultrasound Tongue DB</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -13,7 +13,7 @@
 <header class="header">
   <div class="header-inner">
     <div class="header-left">
-      <h1 class="logo">🔬 超音波舌位DB</h1>
+      <h1 class="logo">🔬 超音波データのコーパス</h1>
       <span class="badge-count" id="header-count">0件</span>
     </div>
     <div class="header-right">
@@ -116,7 +116,7 @@
 
 <script>
 // ====== Config ======
-const ADMIN_PW = 'sunlab2024';
+const ADMIN_PW_HASH = '7f5ec201f13523c5adf3bb96859948b09f4b43be8e2f02f81c4f61ce5a8af0d5';
 let isAdmin = false;
 let currentView = 'table';
 let allVideos = [];
@@ -314,9 +314,10 @@ function showPasswordPrompt() {
   document.getElementById('pw-modal').style.display = 'flex';
   setTimeout(() => document.getElementById('pw-input').focus(), 100);
 }
-function verifyPw() {
+async function verifyPw() {
   const pw = document.getElementById('pw-input').value;
-  if (pw === ADMIN_PW) {
+  const hash = await sha256(pw);
+  if (hash === ADMIN_PW_HASH) {
     isAdmin = true;
     document.getElementById('admin-btn').textContent = '🔓 管理中';
     document.getElementById('admin-panel').style.display = '';
@@ -326,6 +327,11 @@ function verifyPw() {
   } else {
     alert('パスワードが違います');
   }
+}
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 function closePwModal() {
   document.getElementById('pw-modal').style.display = 'none';
