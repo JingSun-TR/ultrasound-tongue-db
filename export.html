@@ -1,56 +1,41 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>IndexedDB Export</title></head><body>
-<h2>Extracting ultrasound-tongue-db data...</h2>
+<html><head><meta charset="UTF-8"><title>IndexedDB Export</title>
+<style>body{font-family:monospace;padding:20px;background:#111;color:#0f0} pre{background:#222;padding:15px;overflow:auto;max-height:500px} button{padding:10px 20px;margin:10px 5px;cursor:pointer}</style></head><body>
+<h2>Ultrasound DB — Export</h2>
 <pre id="status">Opening IndexedDB...</pre>
+<button id="download-btn" style="display:none" onclick="download()">Download videos.json</button>
 <script>
+let exportJSON = '';
+
 (async () => {
-  const status = document.getElementById('status');
+  const el = document.getElementById('status');
   try {
-    const DB_NAME = 'ultrasound-tongue-db-v3';
-    const req = indexedDB.open(DB_NAME, 2);
-    
+    const req = indexedDB.open('ultrasound-tongue-db-v3', 2);
     req.onsuccess = async (e) => {
       const db = e.target.result;
-      const tx = db.transaction('videos', 'readonly');
-      const store = tx.objectStore('videos');
+      const store = db.transaction('videos','readonly').objectStore('videos');
       const getAll = store.getAll();
-      
       getAll.onsuccess = () => {
-        const videos = getAll.result;
-        // Strip videoData blobs
-        const exportData = videos.map(v => {
-          const { videoData, ...rest } = v;
+        const videos = getAll.result.map(v => {
+          const {videoData, ...rest} = v;
           return rest;
         });
-        
-        const json = JSON.stringify(exportData, null, 2);
-        status.textContent = `Found ${videos.length} entries. Downloading...`;
-        
-        // Trigger download
-        const blob = new Blob([json], {type: 'application/json'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'videos.json';
-        document.body.appendChild(a);
-        a.click();
-        
-        status.textContent = `SUCCESS! ${videos.length} entries exported.` +
-          `\n\nData preview:\n` + json.substring(0, 2000) + '...';
-      };
-      
-      getAll.onerror = () => {
-        status.textContent = 'ERROR: ' + getAll.error;
+        exportJSON = JSON.stringify(videos, null, 2);
+        el.textContent = 'FOUND ' + videos.length + ' entries.\n\n' + exportJSON.substring(0, 3000) +
+          (exportJSON.length > 3000 ? '\n\n... (' + exportJSON.length + ' chars total)' : '');
+        document.getElementById('download-btn').style.display = 'inline-block';
       };
     };
-    
-    req.onerror = () => {
-      status.textContent = 'ERROR opening DB: ' + req.error +
-        '\n\nMake sure you open this page from the GitHub Pages origin ' +
-        '(jingsun-tr.github.io/ultrasound-tongue-db)';
-    };
-  } catch(e) {
-    status.textContent = 'FATAL: ' + e.message;
-  }
+    req.onerror = () => { el.textContent = 'ERROR: ' + req.error + '\n\nOpen from GitHub Pages origin!'; };
+  } catch(e) { el.textContent = 'FATAL: ' + e.message; }
 })();
+
+function download() {
+  const b = new Blob([exportJSON], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'videos.json';
+  a.click();
+}
 </script>
 </body></html>
