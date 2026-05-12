@@ -274,10 +274,14 @@ function renderCardView(videos) {
     const phonemes = (v.phoneme || '').split(/[,，\s]+/).filter(Boolean)
       .map(p => '<span class="phoneme-tag">' + escHtml(p) + '</span>').join('');
 
-    // Show thumbnail in server mode
+    // Show thumbnail: server mode, videoUrl, or nothing
     let thumbContent = '<span class="play-icon-overlay">▶</span>';
     if (serverAvailable && v.videoPath) {
       thumbContent = '<video src="' + VIDEO_SERVER_URL + VIDEO_SERVER_DIR + encodeURIComponent(v.videoPath) +
+        '#t=0.1" preload="metadata" muted style="width:100%;height:100%;object-fit:cover;" onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0"></video>' +
+        '<span class="play-icon-overlay">▶</span>';
+    } else if (v.videoUrl) {
+      thumbContent = '<video src="' + escHtml(v.videoUrl) +
         '#t=0.1" preload="metadata" muted style="width:100%;height:100%;object-fit:cover;" onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0"></video>' +
         '<span class="play-icon-overlay">▶</span>';
     }
