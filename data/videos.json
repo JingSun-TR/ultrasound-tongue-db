@@ -9,7 +9,9 @@
     "notes": "左は舌根、右は舌先",
     "fileSize": "381.8 KB",
     "createdAt": "2026-05-12T08:49:32.242Z",
-    "id": 1
+    "id": 1,
+    "videoUrl": "videos/a1.mp4",
+    "videoPath": "a1.mp4"
   },
   {
     "title": "a2",
@@ -21,7 +23,9 @@
     "notes": "",
     "fileSize": "407.1 KB",
     "createdAt": "2026-05-12T08:50:21.078Z",
-    "id": 2
+    "id": 2,
+    "videoUrl": "videos/a2.mp4",
+    "videoPath": "a2.mp4"
   },
   {
     "title": "a3",
@@ -33,7 +37,9 @@
     "notes": "",
     "fileSize": "374.5 KB",
     "createdAt": "2026-05-12T08:51:32.019Z",
-    "id": 3
+    "id": 3,
+    "videoUrl": "videos/a3.mp4",
+    "videoPath": "a3.mp4"
   },
   {
     "title": "あいうえお1",
@@ -45,7 +51,9 @@
     "notes": "",
     "fileSize": "366.4 KB",
     "createdAt": "2026-05-12T08:53:15.906Z",
-    "id": 4
+    "id": 4,
+    "videoUrl": "videos/aiueo1.mp4",
+    "videoPath": "aiueo1.mp4"
   },
   {
     "title": "a,wo,e,yi,wu,yu1",
@@ -57,7 +65,9 @@
     "notes": "",
     "fileSize": "629.5 KB",
     "createdAt": "2026-05-12T08:54:53.818Z",
-    "id": 5
+    "id": 5,
+    "videoUrl": "videos/aoeiuy1.mp4",
+    "videoPath": "aoeiuy1.mp4"
   },
   {
     "title": "a,wo,e,yi,wu,yu2",
@@ -69,7 +79,9 @@
     "notes": "",
     "fileSize": "433.7 KB",
     "createdAt": "2026-05-12T08:56:16.981Z",
-    "id": 6
+    "id": 6,
+    "videoUrl": "videos/aoeiuy2.mp4",
+    "videoPath": "aoeiuy2.mp4"
   },
   {
     "title": "chi1",
@@ -81,7 +93,9 @@
     "notes": "",
     "fileSize": "300.2 KB",
     "createdAt": "2026-05-12T08:57:31.435Z",
-    "id": 7
+    "id": 7,
+    "videoUrl": "videos/chi1.mp4",
+    "videoPath": "chi1.mp4"
   },
   {
     "title": "chi2",
@@ -93,7 +107,9 @@
     "notes": "",
     "fileSize": "439.1 KB",
     "createdAt": "2026-05-12T08:58:04.332Z",
-    "id": 8
+    "id": 8,
+    "videoUrl": "videos/chi2.mp4",
+    "videoPath": "chi2.mp4"
   },
   {
     "title": "chi3",
@@ -105,7 +121,9 @@
     "notes": "",
     "fileSize": "276.7 KB",
     "createdAt": "2026-05-12T12:26:05.318Z",
-    "id": 9
+    "id": 9,
+    "videoUrl": "videos/chi3.mp4",
+    "videoPath": "chi3.mp4"
   },
   {
     "title": "ci1",
@@ -117,7 +135,9 @@
     "notes": "",
     "fileSize": "248.4 KB",
     "createdAt": "2026-05-12T12:27:15.114Z",
-    "id": 10
+    "id": 10,
+    "videoUrl": "videos/ci1.mp4",
+    "videoPath": "ci1.mp4"
   },
   {
     "title": "ci2",
@@ -129,7 +149,9 @@
     "notes": "",
     "fileSize": "307.8 KB",
     "createdAt": "2026-05-12T12:28:15.626Z",
-    "id": 11
+    "id": 11,
+    "videoUrl": "videos/ci2.mp4",
+    "videoPath": "ci2.mp4"
   },
   {
     "title": "ci3",
@@ -141,7 +163,9 @@
     "notes": "",
     "fileSize": "380.9 KB",
     "createdAt": "2026-05-12T12:28:58.686Z",
-    "id": 12
+    "id": 12,
+    "videoUrl": "videos/ci3.mp4",
+    "videoPath": "ci3.mp4"
   },
   {
     "title": "e1",
@@ -153,7 +177,9 @@
     "notes": "",
     "fileSize": "308.4 KB",
     "createdAt": "2026-05-12T12:29:25.317Z",
-    "id": 13
+    "id": 13,
+    "videoUrl": "videos/e1.mp4",
+    "videoPath": "e1.mp4"
   },
   {
     "title": "e2",
@@ -165,7 +191,9 @@
     "notes": "",
     "fileSize": "406.6 KB",
     "createdAt": "2026-05-12T12:30:01.514Z",
-    "id": 14
+    "id": 14,
+    "videoUrl": "videos/e2.mp4",
+    "videoPath": "e2.mp4"
   },
   {
     "title": "e3",
@@ -177,7 +205,9 @@
     "notes": "",
     "fileSize": "392.1 KB",
     "createdAt": "2026-05-12T12:49:21.596Z",
-    "id": 15
+    "id": 15,
+    "videoUrl": "videos/e3.mp4",
+    "videoPath": "e3.mp4"
   },
   {
     "title": "i1",
@@ -189,7 +219,9 @@
     "notes": "",
     "fileSize": "305.1 KB",
     "createdAt": "2026-05-12T12:50:09.958Z",
-    "id": 16
+    "id": 16,
+    "videoUrl": "videos/i1.mp4",
+    "videoPath": "i1.mp4"
   },
   {
     "title": "i2",
@@ -201,7 +233,9 @@
     "notes": "",
     "fileSize": "361.7 KB",
     "createdAt": "2026-05-12T12:50:31.946Z",
-    "id": 17
+    "id": 17,
+    "videoUrl": "videos/i2.mp4",
+    "videoPath": "i2.mp4"
   },
   {
     "title": "i3",
@@ -213,7 +247,9 @@
     "notes": "",
     "fileSize": "276.1 KB",
     "createdAt": "2026-05-12T12:50:47.588Z",
-    "id": 18
+    "id": 18,
+    "videoUrl": "videos/i3.mp4",
+    "videoPath": "i3.mp4"
   },
   {
     "title": "あ1",
@@ -225,7 +261,9 @@
     "notes": "",
     "fileSize": "304.4 KB",
     "createdAt": "2026-05-12T12:56:35.111Z",
-    "id": 19
+    "id": 19,
+    "videoUrl": "videos/jp_a1.mp4",
+    "videoPath": "jp_a1.mp4"
   },
   {
     "title": "あ2",
@@ -237,7 +275,9 @@
     "notes": "",
     "fileSize": "481.3 KB",
     "createdAt": "2026-05-12T12:57:01.072Z",
-    "id": 20
+    "id": 20,
+    "videoUrl": "videos/jp_a2.mp4",
+    "videoPath": "jp_a2.mp4"
   },
   {
     "title": "あ3",
@@ -249,7 +289,9 @@
     "notes": "",
     "fileSize": "362.3 KB",
     "createdAt": "2026-05-12T12:57:44.702Z",
-    "id": 21
+    "id": 21,
+    "videoUrl": "videos/jp_a3.mp4",
+    "videoPath": "jp_a3.mp4"
   },
   {
     "title": "え1",
@@ -261,6 +303,8 @@
     "notes": "",
     "fileSize": "210.9 KB",
     "createdAt": "2026-05-12T12:58:16.794Z",
-    "id": 22
+    "id": 22,
+    "videoUrl": "videos/jp_e1.mp4",
+    "videoPath": "jp_e1.mp4"
   }
 ]
