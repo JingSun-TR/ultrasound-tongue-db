@@ -286,10 +286,13 @@ function renderPagination(totalPages) {
   pg.innerHTML =
     '<button class="btn btn-sm" onclick="goPage('+(currentPage-1)+')" '+(currentPage<=1?'disabled':'')+'>◀ 前</button>'+
     '<span style="padding:4px 12px;font-size:0.85rem">'+currentPage+' / '+totalPages+'</span>'+
-    '<button class="btn btn-sm" onclick="goPage('+(currentPage+1)+')" '+(currentPage>=totalPages?'disabled':'')+'>次 ▶</button>'+
-    (selectedIds.size > 0
-      ? '<button class="btn btn-sm" style="background:#900;color:#fff;margin-left:12px" onclick="exportSelected()">📥 選択エクスポート ('+selectedIds.size+')</button>'
-      : '');
+    '<button class="btn btn-sm" onclick="goPage('+(currentPage+1)+')" '+(currentPage>=totalPages?'disabled':'')+'>次 ▶</button>';
+  if (selectedIds.size > 0) {
+    const hasVideos = allVideos.some(v => selectedIds.has(v.id) && (v.videoUrl || v.videoPath));
+    pg.innerHTML +=
+      '<button class="btn btn-sm" style="margin-left:12px" onclick="exportSelected()">📥 JSON ('+selectedIds.size+')</button>'+
+      (hasVideos ? '<button class="btn btn-sm" style="background:#1a6b3a;color:#fff;margin-left:4px" onclick="downloadSelectedVideos()">🎬 動画 ('+selectedIds.size+')</button>' : '');
+  }
 }
 
 function goPage(p) {
@@ -321,6 +324,25 @@ function exportSelected() {
   a.href = URL.createObjectURL(new Blob([JSON.stringify(exp,null,2)],{type:'application/json'}));
   a.download = 'ultrasound-corpus-selected-'+new Date().toISOString().split('T')[0]+'.json';
   a.click();
+}
+
+async function downloadSelectedVideos() {
+  const sel = allVideos.filter(v => selectedIds.has(v.id) && (v.videoUrl || v.videoPath));
+  if (!sel.length) return;
+  // Build a download list — Chrome blocks auto-downloads beyond the first
+  const links = sel.map(v => {
+    const url = v.videoUrl || ('videos/' + v.videoPath);
+    const fn = v.videoPath || url.split('/').pop() || 'video.mp4';
+    return '<a href="'+esc(url)+'" download="'+esc(fn)+'" class="dl-link" onclick="setTimeout(()=>this.remove(),2000)">⬇ '+esc(fn)+'</a>';
+  }).join('');
+  const div = document.createElement('div');
+  div.id = 'dl-panel';
+  div.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#222;border:1px solid #0f0;border-radius:8px;padding:16px;max-height:60vh;overflow-y:auto;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
+  div.innerHTML = '<h4 style="margin:0 0 8px;color:#0f0">⬇ ダウンロード ('+sel.length+'件)</h4>'+
+    '<button style="position:absolute;top:8px;right:8px;background:none;border:none;color:#888;cursor:pointer;font-size:16px" onclick="this.parentElement.remove()">✕</button>'+
+    links +
+    '<p style="font-size:11px;color:#888;margin-top:8px">各リンクをクリックして保存。Chromeは自動複数DLをブロックします。</p>';
+  document.body.appendChild(div);
 }
 
 function renderTable(videos) {}

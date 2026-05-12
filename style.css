@@ -169,6 +169,8 @@ body {
 }
 .pagination .btn-sm { font-size: 0.8rem; padding: 6px 14px; }
 .row-cb { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+.dl-link { display: block; padding: 4px 0; color: #0ff; text-decoration: none; font-size: 0.85rem; }
+.dl-link:hover { color: #0f0; }
 
 /* ====== Card View ====== */
 .card-grid {
