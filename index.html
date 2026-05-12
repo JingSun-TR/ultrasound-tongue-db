@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="title">超音波データのコーパス — Ultrasound Tongue Corpus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <h1 class="logo" data-i18n="logo">🔬 超音波データのコーパス</h1>
+      <span class="badge-count" id="header-count">0</span>
+    </div>
+    <div class="header-right">
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="ja" onclick="switchLang('ja')">🇯🇵 日</button>
+        <button class="lang-btn" data-lang="zh" onclick="switchLang('zh')">🇨🇳 中</button>
+        <button class="lang-btn" data-lang="en" onclick="switchLang('en')">🇬🇧 EN</button>
+      </div>
+      <button class="btn btn-icon" onclick="exportAll()" data-i18n="exportBtn">📥 导出</button>
+      <button class="btn btn-icon" id="admin-btn" onclick="toggleAdmin()" data-i18n="adminBtn">🔒 管理</button>
+      <button class="btn btn-icon" onclick="toggleView()" id="view-toggle" data-i18n="tableView">📋 表格</button>
+    </div>
+  </div>
+</header>
+
+<div class="search-bar">
+  <div class="search-inner">
+    <input type="text" id="search-input" class="search-input" data-i18n-placeholder="searchPH" placeholder="🔍 検索..." oninput="applyFilters()">
+  </div>
+</div>
+
+<main class="main">
+  <div id="table-view" class="table-container"><table class="data-table"><thead><tr>
+    <th style="width:30px"><input type="checkbox" id="select-all" onclick="toggleSelectAll()" title="全選"></th>
+    <th data-i18n="thNo">#</th><th data-i18n="thTitle">タイトル</th>
+    <th data-i18n="thRep">回</th>
+    <th data-i18n="thLang">言語</th><th data-i18n="thSpeaker">発話者</th><th data-i18n="thDate">日付</th>
+    <th data-i18n="thPlay">再生</th><th class="admin-only" style="display:none" data-i18n="thActions">操作</th>
+  </tr></thead><tbody id="table-body"></tbody></table>
+  <div id="pagination" class="pagination" style="display:none"></div></div>
+  <div id="card-view" class="card-grid" style="display:none"></div>
+</main>
+
+<div id="admin-panel" class="admin-panel" style="display:none">
+  <h3 id="form-heading" data-i18n="addVideo">動画を追加</h3>
+  <input type="hidden" id="form-edit-id">
+  <div class="form-row"><label data-i18n="fTitle">タイトル *</label><input type="text" id="form-title" class="text-input" data-i18n-placeholder="fTitlePH"></div>
+  <div class="form-row"><label data-i18n="fPhoneme">音素 *</label><input type="text" id="form-phoneme" class="text-input" data-i18n-placeholder="fPhonemePH"></div>
+  <div class="form-row"><label>回数</label><input type="number" id="form-rep" class="text-input" value="1" min="1" max="99" style="width:80px"></div>
+  <div class="form-row"><label data-i18n="fLang">言語</label>
+    <select id="form-language" class="text-input"><option value="ja" data-i18n="lang_ja">日本語</option><option value="zh" data-i18n="lang_zh">中国語</option><option value="en" data-i18n="lang_en">英語</option><option value="ko" data-i18n="lang_ko">韓国語</option></select></div>
+  <div class="form-row"><label data-i18n="fSpeaker">発話者</label><input type="text" id="form-speaker" class="text-input" value="CF1"></div>
+  <div class="form-row"><label data-i18n="fDate">日付</label><input type="date" id="form-date" class="text-input"></div>
+  <div class="form-row"><label data-i18n="fFile">動画ファイル</label><input type="file" id="form-file" accept="video/*" class="text-input"></div>
+  <div class="form-row"><label data-i18n="fURL">または動画URL</label><input type="text" id="form-url" class="text-input" placeholder="videos/xxx.mp4"></div>
+  <div class="form-row"><label data-i18n="fNotes">備考</label><textarea id="form-notes" class="text-input" rows="2"></textarea></div>
+  <div class="form-actions">
+    <button class="btn btn-primary" onclick="saveEntry()" data-i18n="saveBtn">保存</button>
+    <button class="btn" onclick="cancelEdit()" data-i18n="cancelBtn">キャンセル</button>
+    <button class="btn" style="margin-left:auto;background:#900;color:#fff" onclick="exportForRepo()" data-i18n="repoJSON">📤 Repo用JSON</button>
+  </div>
+</div>
+
+<div class="modal" id="pw-modal" style="display:none">
+  <div class="modal-backdrop" onclick="closePwModal()"></div>
+  <div class="modal-content modal-sm">
+    <h3 data-i18n="pwTitle">🔐 管理者認証</h3>
+    <p style="font-size:0.85rem;color:#888;margin:12px 0" data-i18n="pwDesc">パスワードを入力してください</p>
+    <input type="password" id="pw-input" class="text-input" style="margin-bottom:12px" onkeydown="if(event.key==='Enter')verifyPw()">
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="verifyPw()" data-i18n="authBtn">認証</button>
+      <button class="btn" onclick="closePwModal()" data-i18n="cancelBtn">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="player-modal" style="display:none">
+  <div class="modal-backdrop" onclick="closePlayer()"></div>
+  <div class="modal-content">
+    <button class="modal-close" onclick="closePlayer()">✕</button>
+    <video id="player-video" controls style="width:100%;max-height:65vh;border-radius:8px;background:#000"></video>
+    <div id="player-info" class="player-info"></div>
+  </div>
+</div>
+
+<script>
+// ====== i18n Dictionary ======
+const I18N = {
+  ja: {
+    title:'超音波データのコーパス — Ultrasound Tongue Corpus', logo:'🔬 超音波データのコーパス',
+    exportBtn:'📥 导出', importBtn:'📤 导入', adminBtn:'🔒 管理', tableView:'📋 表格', cardView:'🃏 卡片',
+    searchPH:'🔍 検索... 音素 / 発話者 / タイトル',
+    thNo:'#', thTitle:'タイトル', thRep:'回', thLang:'言語', thSpeaker:'発話者', thDate:'日付', thPlay:'再生', thActions:'操作',
+    addVideo:'動画を追加', editVideo:'動画を編集',
+    fTitle:'タイトル *', fTitlePH:'例：/a/ 日本語母音', fPhoneme:'音素 *', fPhonemePH:'例：a, i, u, e, o',
+    fLang:'言語', fSpeaker:'発話者', fDate:'日付', fFile:'動画ファイル', fURL:'または動画URL', fNotes:'備考',
+    saveBtn:'保存', cancelBtn:'キャンセル', repoJSON:'📤 Repo用JSON',
+    pwTitle:'🔐 管理者認証', pwDesc:'パスワードを入力してください', authBtn:'認証',
+    wrongPw:'パスワードが違います', noData:'データなし', untitled:'無題', reqFields:'タイトルと音素は必須です',
+    deleteConfirm:'削除してもよろしいですか？', exportOK:'videos.json をダウンロードしました。data/ に上書きして git push すると全ブラウザで共有されます。',
+    items:'件', local:'[local]', adminActive:'管理中',
+    lang_ja:'日本語', lang_zh:'中国語', lang_en:'英語', lang_ko:'韓国語',
+    phonemeLbl:'🔤', langLbl:'🌐', speakerLbl:'👤', dateLbl:'📅',
+  },
+  zh: {
+    title:'超声数据语料库 — Ultrasound Tongue Corpus', logo:'🔬 超声数据语料库',
+    exportBtn:'📥 导出', importBtn:'📤 导入', adminBtn:'🔒 管理', tableView:'📋 表格', cardView:'🃏 卡片',
+    searchPH:'🔍 搜索... 音素 / 发音人 / 标题',
+    thNo:'#', thTitle:'标题', thRep:'次', thLang:'语言', thSpeaker:'发音人', thDate:'日期', thPlay:'播放', thActions:'操作',
+    addVideo:'添加视频', editVideo:'编辑视频',
+    fTitle:'标题 *', fTitlePH:'例：/a/ 日语元音', fPhoneme:'音素 *', fPhonemePH:'例：a, i, u, e, o',
+    fLang:'语言', fSpeaker:'发音人', fDate:'日期', fFile:'视频文件', fURL:'或视频URL', fNotes:'备注',
+    saveBtn:'保存', cancelBtn:'取消', repoJSON:'📤 Repo用JSON',
+    pwTitle:'🔐 管理员认证', pwDesc:'请输入密码', authBtn:'认证',
+    wrongPw:'密码错误', noData:'暂无数据', untitled:'无标题', reqFields:'标题和音素为必填项',
+    deleteConfirm:'确定要删除吗？', exportOK:'videos.json 已下载。放入 data/ 文件夹并 git push 后全浏览器共享。',
+    items:'条', local:'[本地]', adminActive:'管理中',
+    lang_ja:'日语', lang_zh:'中文', lang_en:'英语', lang_ko:'韩语',
+    phonemeLbl:'🔤', langLbl:'🌐', speakerLbl:'👤', dateLbl:'📅',
+  },
+  en: {
+    title:'Ultrasound Data Corpus — Ultrasound Tongue Corpus', logo:'🔬 Ultrasound Data Corpus',
+    exportBtn:'📥 Export', importBtn:'📤 Import', adminBtn:'🔒 Admin', tableView:'📋 Table', cardView:'🃏 Cards',
+    searchPH:'🔍 Search... phoneme / speaker / title',
+    thNo:'#', thTitle:'Title', thRep:'Rep', thLang:'Language', thSpeaker:'Speaker', thDate:'Date', thPlay:'Play', thActions:'Actions',
+    addVideo:'Add Video', editVideo:'Edit Video',
+    fTitle:'Title *', fTitlePH:'e.g. /a/ Japanese vowel', fPhoneme:'Phoneme *', fPhonemePH:'e.g. a, i, u, e, o',
+    fLang:'Language', fSpeaker:'Speaker', fDate:'Date', fFile:'Video File', fURL:'or Video URL', fNotes:'Notes',
+    saveBtn:'Save', cancelBtn:'Cancel', repoJSON:'📤 Repo JSON',
+    pwTitle:'🔐 Admin Authentication', pwDesc:'Enter password', authBtn:'Authenticate',
+    wrongPw:'Incorrect password', noData:'No data', untitled:'Untitled', reqFields:'Title and phoneme are required',
+    deleteConfirm:'Delete this entry?', exportOK:'videos.json downloaded. Place in data/ and git push to share across all browsers.',
+    items:'videos', local:'[local]', adminActive:'Admin Mode',
+    lang_ja:'Japanese', lang_zh:'Chinese', lang_en:'English', lang_ko:'Korean',
+    phonemeLbl:'🔤', langLbl:'🌐', speakerLbl:'👤', dateLbl:'📅',
+  }
+};
+
+let currentLang = 'ja';
+function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || I18N['ja'][key] || key; }
+function switchLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('corpus-lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => el.placeholder = t(el.dataset.i18nPlaceholder));
+  document.title = t('title');
+  // Re-render dynamic content
+  mergeData();
+  applyFilters();
+  updateAdminUI();
+}
+
+// ====== Config ======
+const ADMIN_PW_HASH = '7f5ec201f13523c5adf3bb96859948b09f4b43be8e2f02f81c4f61ce5a8af0d5';
+let isAdmin = false;
+let currentView = 'table';
+let allVideos = [];
+let repoData = [];
+let localEdits = {};
+let nextLocalId = -1;
+let currentPage = 1;
+const PAGE_SIZE = 100;
+let selectedIds = new Set();
+
+function updateAdminUI() {
+  const btn = document.getElementById('admin-btn');
+  if (isAdmin) btn.textContent = '🔓 ' + t('adminActive');
+  else btn.textContent = '🔒 ' + t('adminBtn');
+  document.getElementById('view-toggle').textContent = currentView === 'table' ? t('tableView') : t('cardView');
+}
+
+// ====== Load ======
+async function loadData() {
+  try { const r = await fetch('data/videos.json'); repoData = await r.json(); }
+  catch(e) { repoData = []; }
+  await loadLocalEdits();
+  mergeData();
+  applyFilters();
+}
+
+// ====== IndexedDB ======
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('ultrasound-tongue-db-local', 1);
+    req.onupgradeneeded = e => { e.target.result.createObjectStore('edits', { keyPath: 'id' }); };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+async function loadLocalEdits() {
+  try {
+    const db = await openIDB(); const tx = db.transaction('edits', 'readonly'); const store = tx.objectStore('edits');
+    localEdits = {};
+    await new Promise(r => { const req = store.openCursor(); req.onsuccess = e => { const c = e.target.result; if (c) { localEdits[c.key] = c.value; c.continue(); } else r(); }; });
+    nextLocalId = -1;
+    for (const k of Object.keys(localEdits)) { if (parseInt(k) < nextLocalId) nextLocalId = parseInt(k); }
+    nextLocalId--;
+    db.close();
+  } catch(e) { localEdits = {}; }
+}
+async function saveLocalEdit(entry) {
+  const db = await openIDB(); const tx = db.transaction('edits', 'readwrite');
+  tx.objectStore('edits').put(entry); await new Promise(r => { tx.oncomplete = r; });
+  localEdits[entry.id] = entry; db.close();
+}
+async function deleteLocalEdit(id) {
+  const db = await openIDB(); const tx = db.transaction('edits', 'readwrite');
+  tx.objectStore('edits').delete(id); await new Promise(r => { tx.oncomplete = r; });
+  delete localEdits[id]; db.close();
+}
+
+// ====== Merge ======
+function mergeData() {
+  const map = new Map();
+  for (const v of repoData) map.set(v.id, {...v, _source:'repo'});
+  for (const [id, v] of Object.entries(localEdits)) {
+    if (v._deleted) { map.delete(parseInt(id)); continue; }
+    map.set(parseInt(id), {...v, _source:'local'});
+  }
+  allVideos = Array.from(map.values()).sort((a,b) => {
+    if (a.language !== b.language) return a.language === 'ja' ? -1 : 1;
+    return (a.title||'').localeCompare(b.title||'');
+  });
+  document.getElementById('header-count').textContent = allVideos.length + ' ' + t('items');
+}
+
+// ====== Render ======
+let filteredVideos = [];
+function applyFilters() {
+  const q = (document.getElementById('search-input').value||'').toLowerCase().trim();
+  filteredVideos = allVideos;
+  if (q) {
+    const terms = q.split(/\s+/).filter(Boolean);
+    filteredVideos = allVideos.filter(v => {
+      const s = [v.title,v.phoneme,v.ipa,v.speaker,v.language,v.date].filter(Boolean).join(' ').toLowerCase();
+      return terms.every(t => s.includes(t));
+    });
+  }
+  currentPage = 1;
+  if (currentView === 'table') renderPage(); else renderCards(filteredVideos);
+}
+
+function langLabel(code) { return t('lang_'+code) || code; }
+
+function renderPage() {
+  const totalPages = Math.ceil(filteredVideos.length / PAGE_SIZE) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filteredVideos.slice(start, start + PAGE_SIZE);
+
+  const tbody = document.getElementById('table-body');
+  if (!page.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-row">'+t('noData')+'</td></tr>'; }
+  else {
+    tbody.innerHTML = page.map((v,i) => {
+      const globalIdx = start + i + 1;
+      const hasVid = !!v.videoUrl || !!v.videoPath;
+      const checked = selectedIds.has(v.id) ? ' checked' : '';
+      const actions = isAdmin ? '<td><button class="edit-btn" onclick="editEntry('+v.id+')">✏️</button><button class="del-btn" onclick="deleteEntry('+v.id+')">🗑</button></td>' : '';
+      return '<tr><td><input type="checkbox" class="row-cb" data-id="'+v.id+'"'+checked+' onchange="toggleSelect('+v.id+',this.checked)"></td>'+
+        '<td>'+globalIdx+'</td>'+
+        '<td>'+esc(v.title||'')+(v._source==='local'?' <span style="color:#ff0;font-size:10px">'+t('local')+'</span>':'')+'</td>'+
+        '<td style="text-align:center">'+(v.repetition||1)+'</td>'+
+        '<td>'+langLabel(v.language)+'</td><td>'+esc(v.speaker||'')+'</td>'+
+        '<td>'+(v.date||'')+'</td>'+
+        '<td>'+(hasVid?'<button class="play-btn" onclick="event.stopPropagation();playVideo('+v.id+')">▶</button>':'<span style="color:#888">-</span>')+'</td>'+
+        actions+'</tr>';
+    }).join('');
+  }
+  document.querySelectorAll('.admin-only').forEach(e => e.style.display = isAdmin ? '' : 'none');
+  document.getElementById('select-all').checked = page.length > 0 && page.every(v => selectedIds.has(v.id));
+  renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+  const pg = document.getElementById('pagination');
+  if (totalPages <= 1) { pg.style.display = 'none'; return; }
+  pg.style.display = 'flex';
+  pg.innerHTML =
+    '<button class="btn btn-sm" onclick="goPage('+(currentPage-1)+')" '+(currentPage<=1?'disabled':'')+'>◀ 前</button>'+
+    '<span style="padding:4px 12px;font-size:0.85rem">'+currentPage+' / '+totalPages+'</span>'+
+    '<button class="btn btn-sm" onclick="goPage('+(currentPage+1)+')" '+(currentPage>=totalPages?'disabled':'')+'>次 ▶</button>';
+  if (selectedIds.size > 0) {
+    const hasVideos = allVideos.some(v => selectedIds.has(v.id) && (v.videoUrl || v.videoPath));
+    pg.innerHTML +=
+      '<button class="btn btn-sm" style="margin-left:12px" onclick="exportSelected()">📥 JSON ('+selectedIds.size+')</button>'+
+      (hasVideos ? '<button class="btn btn-sm" style="background:#1a6b3a;color:#fff;margin-left:4px" onclick="downloadSelectedVideos()">🎬 動画 ('+selectedIds.size+')</button>' : '');
+  }
+}
+
+function goPage(p) {
+  const total = Math.ceil(filteredVideos.length / PAGE_SIZE) || 1;
+  if (p < 1 || p > total) return;
+  currentPage = p;
+  renderPage();
+}
+
+function toggleSelect(id, checked) {
+  if (checked) selectedIds.add(id); else selectedIds.delete(id);
+  document.getElementById('select-all').checked = false;
+  renderPagination(Math.ceil(filteredVideos.length / PAGE_SIZE) || 1);
+}
+
+function toggleSelectAll() {
+  const checked = document.getElementById('select-all').checked;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filteredVideos.slice(start, start + PAGE_SIZE);
+  page.forEach(v => { if (checked) selectedIds.add(v.id); else selectedIds.delete(v.id); });
+  renderPage();
+}
+
+function exportSelected() {
+  const sel = allVideos.filter(v => selectedIds.has(v.id));
+  if (!sel.length) return;
+  const exp = sel.map(v => { const {videoData,_source,...r}=v; return r; });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(exp,null,2)],{type:'application/json'}));
+  a.download = 'ultrasound-corpus-selected-'+new Date().toISOString().split('T')[0]+'.json';
+  a.click();
+}
+
+async function downloadSelectedVideos() {
+  const sel = allVideos.filter(v => selectedIds.has(v.id) && (v.videoUrl || v.videoPath));
+  if (!sel.length) return;
+  // Build a download list — Chrome blocks auto-downloads beyond the first
+  const links = sel.map(v => {
+    const url = v.videoUrl || ('videos/' + v.videoPath);
+    const fn = v.videoPath || url.split('/').pop() || 'video.mp4';
+    return '<a href="'+esc(url)+'" download="'+esc(fn)+'" class="dl-link" onclick="setTimeout(()=>this.remove(),2000)">⬇ '+esc(fn)+'</a>';
+  }).join('');
+  const div = document.createElement('div');
+  div.id = 'dl-panel';
+  div.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#222;border:1px solid #0f0;border-radius:8px;padding:16px;max-height:60vh;overflow-y:auto;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
+  div.innerHTML = '<h4 style="margin:0 0 8px;color:#0f0">⬇ ダウンロード ('+sel.length+'件)</h4>'+
+    '<button style="position:absolute;top:8px;right:8px;background:none;border:none;color:#888;cursor:pointer;font-size:16px" onclick="this.parentElement.remove()">✕</button>'+
+    links +
+    '<p style="font-size:11px;color:#888;margin-top:8px">各リンクをクリックして保存。Chromeは自動複数DLをブロックします。</p>';
+  document.body.appendChild(div);
+}
+
+function renderTable(videos) {}
+
+function renderCards(videos) {
+  const grid = document.getElementById('card-view');
+  if (!videos.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#888">'+t('noData')+'</div>'; return; }
+  grid.innerHTML = videos.map(v => {
+    const hasVid = !!v.videoUrl || !!v.videoPath;
+    return '<div class="video-card"'+(hasVid?' onclick="playVideo('+v.id+')"':'')+'>'+
+      '<div class="video-thumb">'+(hasVid
+        ? '<video src="'+esc(v.videoUrl||'videos/'+v.videoPath)+'#t=0.1" preload="metadata" muted></video><span class="play-icon-overlay">▶</span>'
+        : '<span style="display:flex;align-items:center;justify-content:center;height:100%;color:#888">📹</span>')+'</div>'+
+      '<div class="card-info"><div class="card-title">'+esc(v.title||t('untitled'))+'</div>'+
+        '<div class="card-tags"><span class="phoneme-tag">'+esc(v.phoneme||'')+'</span></div>'+
+        '<div style="font-size:0.75rem;color:#888;margin-top:4px">'+langLabel(v.language)+' · '+esc(v.speaker||'')+' · '+(v.date||'')+'</div>'+
+      '</div></div>';
+  }).join('');
+}
+
+// ====== Play ======
+function playVideo(id) {
+  const video = allVideos.find(v => v.id === parseInt(id));
+  if (!video) return;
+  const src = video.videoUrl || ('videos/' + video.videoPath);
+  if (!src || src === 'videos/undefined') return;
+  const player = document.getElementById('player-video');
+  player.src = src; player.style.display = '';
+  document.getElementById('player-info').innerHTML =
+    '<h3>'+esc(video.title||'')+'</h3><div class="player-meta">'+
+      '<span class="phoneme-tag">'+t('phonemeLbl')+' '+esc(video.phoneme)+'</span>'+
+      '<span class="phoneme-tag">'+t('langLbl')+' '+langLabel(video.language)+'</span>'+
+      '<span class="phoneme-tag">'+t('speakerLbl')+' '+esc(video.speaker||'')+'</span>'+
+      '<span class="phoneme-tag">'+t('dateLbl')+' '+(video.date||'')+'</span></div>';
+  document.getElementById('player-modal').style.display = 'flex';
+  player.play().catch(()=>{});
+}
+function closePlayer() {
+  document.getElementById('player-modal').style.display = 'none';
+  const p = document.getElementById('player-video'); p.pause(); p.src = '';
+}
+
+// ====== Admin ======
+function toggleAdmin() {
+  if (isAdmin) { isAdmin = false; document.getElementById('admin-panel').style.display = 'none'; }
+  else { showPasswordPrompt(); }
+  updateAdminUI(); applyFilters();
+}
+function showPasswordPrompt() {
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+async function verifyPw() {
+  const pw = document.getElementById('pw-input').value;
+  const hash = await sha256(pw);
+  if (hash === ADMIN_PW_HASH) {
+    isAdmin = true; document.getElementById('admin-panel').style.display = ''; cancelEdit(); closePwModal();
+  } else { alert(t('wrongPw')); }
+  updateAdminUI(); applyFilters();
+}
+async function sha256(m) { const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(m)); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function closePwModal() { document.getElementById('pw-modal').style.display = 'none'; }
+
+async function saveEntry() {
+  const title = document.getElementById('form-title').value.trim();
+  const phoneme = document.getElementById('form-phoneme').value.trim();
+  if (!title || !phoneme) { alert(t('reqFields')); return; }
+  const editId = document.getElementById('form-edit-id').value;
+  const entry = {
+    id: editId ? parseInt(editId) : nextLocalId--,
+    title, phoneme, ipa: '',
+    language: document.getElementById('form-language').value,
+    speaker: document.getElementById('form-speaker').value.trim(),
+    date: document.getElementById('form-date').value,
+    repetition: parseInt(document.getElementById('form-rep').value) || 1,
+    notes: document.getElementById('form-notes').value.trim(),
+    createdAt: new Date().toISOString()
+  };
+  const url = document.getElementById('form-url').value.trim();
+  if (url) { entry.videoUrl = url; entry.videoPath = url.replace(/^videos\//, ''); }
+  const file = document.getElementById('form-file').files[0];
+  if (file) {
+    entry.videoData = file;
+    entry.fileSize = (file.size/1024).toFixed(1) + ' KB';
+    if (!entry.videoUrl) {
+      const fn = (title||'video').replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]/g,'_').substring(0,30);
+      entry.videoPath = fn + '.' + file.name.split('.').pop();
+    }
+  }
+  await saveLocalEdit(entry);
+  mergeData(); applyFilters(); cancelEdit();
+}
+function editEntry(id) {
+  const v = allVideos.find(x => x.id === id); if (!v) return;
+  document.getElementById('form-edit-id').value = v.id;
+  document.getElementById('form-title').value = v.title||'';
+  document.getElementById('form-phoneme').value = v.phoneme||'';
+  document.getElementById('form-language').value = v.language||'ja';
+  document.getElementById('form-speaker').value = v.speaker||'';
+  document.getElementById('form-date').value = v.date||'';
+  document.getElementById('form-rep').value = v.repetition||1;
+  document.getElementById('form-notes').value = v.notes||'';
+  document.getElementById('form-url').value = v.videoUrl||'';
+  document.getElementById('form-heading').textContent = t('editVideo');
+  document.getElementById('form-file').value = '';
+  document.getElementById('admin-panel').scrollIntoView({behavior:'smooth'});
+}
+async function deleteEntry(id) {
+  if (!confirm(t('deleteConfirm'))) return;
+  const v = allVideos.find(x => x.id === id);
+  if (v && v._source === 'local') await deleteLocalEdit(id);
+  else await saveLocalEdit({id, _deleted: true});
+  mergeData(); applyFilters();
+}
+function cancelEdit() {
+  document.getElementById('form-edit-id').value = '';
+  ['form-title','form-phoneme','form-url','form-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('form-file').value = '';
+  document.getElementById('form-rep').value = '1';
+  document.getElementById('form-heading').textContent = t('addVideo');
+}
+
+// ====== Export ======
+function exportAll() {
+  const exp = allVideos.map(v => { const {videoData,_source,...r}=v; return r; });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(exp,null,2)],{type:'application/json'}));
+  a.download = 'ultrasound-corpus-'+new Date().toISOString().split('T')[0]+'.json'; a.click();
+}
+function exportForRepo() {
+  const exp = allVideos.map(v => { const {videoData,_source,_deleted,...r}=v; return r; });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(exp,null,2)],{type:'application/json'}));
+  a.download = 'videos.json'; a.click();
+  alert(t('exportOK'));
+}
+
+// ====== View ======
+function toggleView() {
+  currentView = currentView === 'table' ? 'cards' : 'table';
+  document.getElementById('table-view').style.display = currentView==='table'?'':'none';
+  document.getElementById('card-view').style.display = currentView==='cards'?'':'none';
+  updateAdminUI(); applyFilters();
+}
+
+function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ====== Init ======
+currentLang = localStorage.getItem('corpus-lang') || 'ja';
+document.getElementById('form-date').value = new Date().toISOString().split('T')[0];
+switchLang(currentLang);
+loadData();
+</script>
+</body>
+</html>
