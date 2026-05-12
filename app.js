@@ -549,14 +549,29 @@ async function playVideo(id) {
 
   // Determine video source
   let src = '';
+  let noVideo = false;
   if (serverAvailable && video.videoPath) {
     src = VIDEO_SERVER_URL + VIDEO_SERVER_DIR + encodeURIComponent(video.videoPath);
   } else if (video.videoUrl) {
     src = video.videoUrl;
   } else if (video.videoData) {
     src = video.videoData;
+  } else {
+    noVideo = true;
   }
 
+  if (noVideo) {
+    player.removeAttribute('src');
+    player.style.display = 'none';
+    document.getElementById('player-info').innerHTML =
+      '<h3>' + escHtml(video.title || t('untitled')) + '</h3>' +
+      '<p style=\"color:#ff6b6b;margin-top:20px;font-size:16px\">⚠️ 视频文件未上传</p>' +
+      '<p style=\"color:#888;font-size:14px\">请通过管理面板重新上传视频文件。<br>支持拖放 MP4/WebM 文件。</p>';
+    modal.classList.add('show');
+    return;
+  }
+
+  player.style.display = '';
   player.src = src;
 
   document.getElementById('player-info').innerHTML =
